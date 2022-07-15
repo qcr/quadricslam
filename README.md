@@ -1,5 +1,13 @@
 # QuadricSLAM
 
+[![QUT Centre for Robotics Open Source](https://github.com/qcr/qcr.github.io/raw/master/misc/badge.svg)](https://qcr.github.io)
+![Primary language](https://img.shields.io/github/languages/top/qcr/quadricslam)
+[![License](https://img.shields.io/github/license/qcr/quadricslam)](./LICENSE.txt)
+
+<!-- [![Conda Version](https://img.shields.io/conda/vn/conda-forge/quadricslam.svg)](https://anaconda.org/conda-forge/quadricslam) -->
+<!-- [![Conda Recipe](https://img.shields.io/badge/recipe-quadricslam-green.svg)](https://anaconda.org/conda-forge/quadricslam) -->
+<!-- [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/quadricslam.svg)](https://anaconda.org/conda-forge/quadricslam) -->
+
 This repository contains demonstrations of QuadricSLAM in a variety of different systems. The demonstrations apply our custom [Quadrics extension for GTSAM](https://github.com/qcr/gtsam-quadrics) to simultaneous localisation and mapping (SLAM) problems in a variety of different domains and software ecosystems.
 
 TODO feature image
