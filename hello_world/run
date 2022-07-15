@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+
+import gtsam
+import gtsam_quadrics
+import numpy as np
+
+if __name__ == '__main__':
+    # Noise models & shortcuts for generating symbols
+    NOISE_PRIOR = gtsam.noiseModel.Diagonal.Sigmas(
+        np.array([1e-1] * 6, dtype=np.float64))
+    NOISE_ODOM = gtsam.noiseModel.Diagonal.Sigmas(
+        np.array([0.01] * 6, dtype=np.float64))
+    NOISE_BBOX = gtsam.noiseModel.Diagonal.Sigmas(
+        np.array([3] * 4, dtype=np.float64))
+
+    X = lambda i: int(gtsam.symbol('x', i))
+    Q = lambda i: int(gtsam.symbol('q', i))
+
+    # Define some poses representing travelling a diamond around the origin,
+    # with each pose facing towards the origin
+    poses = [
+        gtsam.PinholeCameraCal3_S2.Lookat(x, [0, 0, 0], [0, 0, 1],
+                                          gtsam.Cal3_S2()).pose() for x in [
+                                              [10, 0, 0],
+                                              [0, -10, 0],
+                                              [-10, 0, 0],
+                                              [0, 10, 0],
+                                              [10, 0, 0],
+                                          ]
+    ]
+
+    # Define our graph, with a prior factor & odometry factors
+    graph = gtsam.NonlinearFactorGraph()
+
+    graph.add(gtsam.PriorFactorPose3(X(0), poses[0], NOISE_PRIOR))
+    for i in range(len(poses) - 1):
+        graph.add(
+            gtsam.BetweenFactorPose3(X(i), X(i + 1),
+                                     poses[i].between(poses[i + 1]),
+                                     NOISE_ODOM))
+
+    # Start with some rubbish estimates for each of the poses, and use the
+    # optimiser to recover the trajectory
+    values = gtsam.Values()
+    for i, p in enumerate(poses):
+        values.insert(X(i), gtsam.Pose3())
+
+    r = gtsam.LevenbergMarquardtOptimizer(graph, values).optimize()
+    print(r)
