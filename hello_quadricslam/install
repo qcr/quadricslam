@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+echo "Nothing to install for '$(dirname $0)' example."
