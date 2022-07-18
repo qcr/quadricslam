@@ -63,7 +63,7 @@ if __name__ == '__main__':
     for i, p in enumerate(poses):
         values.insert(X(i), gtsam.Pose3())
     for i, q in enumerate(quadrics):
-        values.insert(Q(i), q)
+        q.addToValues(values, Q(i))
 
     r = gtsam.LevenbergMarquardtOptimizer(graph, values).optimize()
     print(r)
