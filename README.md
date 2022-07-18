@@ -15,10 +15,10 @@ TODO feature image
 Systems include:
 
 - a simple "hello_world" example with dummy data
-- running QuadricSLAM on the [TUM RGB-D dataset](https://vision.in.tum.de/data/datasets/rgbd-dataset), as done in [our paper](#citing-our-work)
-- plug-n-play QuadricSLAM on a [Intel RealSense D435i](https://www.intelrealsense.com/depth-camera-d435i/)
-- QuadricSLAM on a [Intel RealSense D435i](https://www.intelrealsense.com/depth-camera-d435i/) in a ROS ecosystem
-- QuadricSLAM in photorealistic 3D simulation as an [add-on](https://github.com/qcr/benchbot_addons) for the [BenchBot ecosystem](https://github.com/qcr/benchbot)
+- running QuadricSLAM on the [TUM RGB-D dataset](https://vision.in.tum.de/data/datasets/rgbd-dataset), as done in [our paper](#citing-our-work) TODO
+- plug-n-play QuadricSLAM on a [Intel RealSense D435i](https://www.intelrealsense.com/depth-camera-d435i/) TODO
+- QuadricSLAM on a [Intel RealSense D435i](https://www.intelrealsense.com/depth-camera-d435i/) in a ROS ecosystem TODO
+- QuadricSLAM in photorealistic 3D simulation as an [add-on](https://github.com/qcr/benchbot_addons) for the [BenchBot ecosystem](https://github.com/qcr/benchbot) TODO
 
 ## Using the examples in this repository
 
