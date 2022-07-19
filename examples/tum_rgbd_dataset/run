@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+
+import sys
+
+import gtsam
+import gtsam_quadrics
+
+
+class Dataset:
+
+    def __init__(self) -> None:
+        pass
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print('ERROR: provide an argument selecting the dataset.')
+        sys.exit()
+
+    # d
