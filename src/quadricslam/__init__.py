@@ -1,3 +1,3 @@
 from .quadricslam import QuadricSlam
-from .interfaces.dataset import Dataset
+from .interfaces.datasource import DataSource
 from .interfaces.detector import Detector
