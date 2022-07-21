@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
+import cv2
 import numpy as np
 import os
 import sys
 from subprocess import check_output
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, cast
 
 import gtsam
 
@@ -12,6 +13,8 @@ import quadricslam as q
 
 
 class TumRgbd(q.DataSource):
+
+    data_list_type = List[List[Union[float, str]]]
 
     def __init__(self, path: str) -> None:
         # Validate path exists
@@ -35,7 +38,7 @@ class TumRgbd(q.DataSource):
         self.data_length = len(self.data['depth'])
         self.restart()
 
-    def _file_list(self, type: str) -> List[List[Union[float, str]]]:
+    def _file_list(self, type: str) -> data_list_type:
         fn = os.path.join(self.path, '%s.txt' % type)
         if not os.path.exists(fn):
             raise ValueError("File '%s' does not exist." % fn)
@@ -47,8 +50,8 @@ class TumRgbd(q.DataSource):
                                       fn, shell=True).strip().split(b'\n')]
 
     @staticmethod
-    def _synced_list(candidates: List[bytes],
-                     reference: List[bytes]) -> List[bytes]:
+    def _synced_list(candidates: data_list_type,
+                     reference: data_list_type) -> data_list_type:
         ts_c = np.asarray([c[0] for c in candidates])
         ts_r = np.asarray([r[0] for r in reference])
         return [
@@ -64,15 +67,18 @@ class TumRgbd(q.DataSource):
     def next(
         self
     ) -> Tuple[Optional[gtsam.Pose3], np.ndarray, Optional[np.ndarray]]:
+        i = self.data_i
         self.data_i += 1
-        return tuple(d[self.data_i - 1] for d in self.data.values())
+        return None, cv2.imread(
+            os.path.join(self.path, cast(str, self.data['rgb'][i][1]))), None
 
     def restart(self) -> None:
         self.data_i = 0
 
 
 if __name__ == '__main__':
-    d = TumRgbd(sys.argv[1])
-    print(["%s: %d" % (k, len(v)) for k, v in d.data.items()])
+    ds = TumRgbd(sys.argv[1])
     for i in range(0, 10):
-        print(d.next())
+        o, i, d = ds.next()
+        cv2.imshow('test', i)
+        cv2.waitKey(0)
