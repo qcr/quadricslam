@@ -9,5 +9,6 @@ class VisualOdometry(ABC):
         pass
 
     @abstractmethod
-    def odom(self, rgb: np.ndarray, depth: Optional[np.ndarray]):
+    def odom(self, rgb: np.ndarray, depth: Optional[np.ndarray],
+             odom_raw: Optional[np.ndarray]):
         pass

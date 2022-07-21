@@ -19,3 +19,7 @@ class DataSource(ABC):
         self
     ) -> Tuple[Optional[gtsam.Pose3], np.ndarray, Optional[np.ndarray]]:
         pass
+
+    @abstractmethod
+    def restart(self) -> None:
+        pass

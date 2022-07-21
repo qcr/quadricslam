@@ -13,9 +13,21 @@ class QuadricSlam:
         self.detector = detector
         self.visual_odometry = visual_odometry
 
+        self.reset()
+
+    def reset(self) -> None:
+        self.data_source.restart()
+
+        self.graph = gtsam.NonlinearFactorGraph()
+        self.estimates = gtsam.Values()
+
     def run(self) -> None:
         while not self.data_source.done():
+            # Get latest data from the scene (odom, images, and detections)
             odom, rgb, depth = self.data_source.next()
-            if not odom and self.visual_odometry:
-                odom = self.visual_odometry.odom(rgb, depth)
-            boxes = self.detector.detect(rgb)
+            if self.visual_odometry:
+                odom = self.visual_odometry.odom(rgb, depth, odom)
+            detections = self.detector.detect(rgb)
+
+            # Add any newly associated quadric observations to the factor graph
+            # TODO
