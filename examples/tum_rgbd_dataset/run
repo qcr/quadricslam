@@ -4,7 +4,7 @@ import numpy as np
 import os
 import sys
 from subprocess import check_output
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import gtsam
 
@@ -35,22 +35,28 @@ class TumRgbd(q.DataSource):
         self.data_length = len(self.data['depth'])
         self.restart()
 
-    def _file_list(self, type: str) -> List[List[bytes]]:
+    def _file_list(self, type: str) -> List[List[Union[float, str]]]:
         fn = os.path.join(self.path, '%s.txt' % type)
         if not os.path.exists(fn):
             raise ValueError("File '%s' does not exist." % fn)
-        return [
-            l.split(b' ')
-            for l in check_output("cat %s | grep -v '^#'" %
-                                  fn, shell=True).strip().split(b'\n')
+        return [[
+            float(x) if i == 0 else x.decode('utf-8')
+            for i, x in enumerate(l.split(b' '))
         ]
+                for l in check_output("cat %s | grep -v '^#'" %
+                                      fn, shell=True).strip().split(b'\n')]
 
     @staticmethod
     def _synced_list(candidates: List[bytes],
                      reference: List[bytes]) -> List[bytes]:
-        ts_c = np.asarray([c[0] for c in candidates], dtype=float)
-        ts_r = np.asarray([r[0] for r in reference], dtype=float)
-        return [candidates[i] for i in np.searchsorted(ts_c, ts_r)]
+        ts_c = np.asarray([c[0] for c in candidates])
+        ts_r = np.asarray([r[0] for r in reference])
+        return [
+            candidates[i] if i == 0 or
+            np.abs(np.asarray([candidates[i][0], candidates[i - 1][0]
+                              ])).argmin() == 0 else candidates[i - 1]
+            for i in np.searchsorted(ts_c, ts_r)
+        ]
 
     def done(self) -> bool:
         return self.data_i == self.data_length
