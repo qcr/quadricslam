@@ -1,20 +1,72 @@
 #!/usr/bin/env python3
 
+import numpy as np
+import os
 import sys
+from subprocess import check_output
+from typing import List, Optional, Tuple
 
 import gtsam
-import gtsam_quadrics
+
+import quadricslam as q
 
 
-class Dataset:
+class TumRgbd(q.DataSource):
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, path: str) -> None:
+        # Validate path exists
+        self.path = path
+        if not os.path.isdir(self.path):
+            raise ValueError("Path '%s' does not exist." % self.path)
+
+        # Derive synced dataset (aligning on depth as it always has the least
+        # data)
+        d = self._file_list('depth')
+        self.data = {
+            **{
+                'depth': d
+            },
+            **{
+                t: TumRgbd._synced_list(self._file_list(t), d) for t in [
+                    'rgb', 'accelerometer', 'groundtruth'
+                ]
+            }
+        }
+        self.data_length = len(self.data['depth'])
+        self.restart()
+
+    def _file_list(self, type: str) -> List[List[bytes]]:
+        fn = os.path.join(self.path, '%s.txt' % type)
+        if not os.path.exists(fn):
+            raise ValueError("File '%s' does not exist." % fn)
+        return [
+            l.split(b' ')
+            for l in check_output("cat %s | grep -v '^#'" %
+                                  fn, shell=True).strip().split(b'\n')
+        ]
+
+    @staticmethod
+    def _synced_list(candidates: List[bytes],
+                     reference: List[bytes]) -> List[bytes]:
+        ts_c = np.asarray([c[0] for c in candidates], dtype=float)
+        ts_r = np.asarray([r[0] for r in reference], dtype=float)
+        return [candidates[i] for i in np.searchsorted(ts_c, ts_r)]
+
+    def done(self) -> bool:
+        return self.data_i == self.data_length
+
+    def next(
+        self
+    ) -> Tuple[Optional[gtsam.Pose3], np.ndarray, Optional[np.ndarray]]:
+        self.data_i += 1
+        return tuple(d[self.data_i - 1] for d in self.data.values())
+
+    def restart(self) -> None:
+        self.data_i = 0
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print('ERROR: provide an argument selecting the dataset.')
-        sys.exit()
-
-    # d
+    d = TumRgbd(sys.argv[1])
+    print(["%s: %d" % (k, len(v)) for k, v in d.data.items()])
+    for i in range(0, 10):
+        print(d.next())
