@@ -8,6 +8,11 @@ from subprocess import check_output
 from typing import List, Optional, Tuple, Union, cast
 
 import gtsam
+from detectron2 import config as d2c
+from detectron2 import data as d2d
+from detectron2 import engine as d2e
+from detectron2 import model_zoo as d2mz
+from detectron2.utils import visualizer as d2v
 
 import quadricslam as q
 
@@ -76,9 +81,33 @@ class TumRgbd(q.DataSource):
         self.data_i = 0
 
 
+class FasterRcnn(q.Detector):
+
+    def __init__(
+            self,
+            zoo_model: str = 'COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml',
+            detection_thresh: float = 0.5) -> None:
+        c = d2c.get_cfg()
+        c.merge_from_file(d2mz.get_config_file(zoo_model))
+        c.MODEL.ROI_HEADS.SCORE_THRESH_TEST = detection_thresh
+        c.MODEL.WEIGHTS = d2mz.get_checkpoint_url(zoo_model)
+        self.predictor = d2e.DefaultPredictor(c)
+
+    def detect(self, rgb: np.ndarray) -> None:
+        return self.predictor(rgb)
+
+
+def _vis(rgb, detections, cfg):
+    v = d2v.Visualizer(rgb[:, :, ::-1], d2d.MetadataCatalog.get(cfg))
+    out = v.draw_instance_predictions(detections["instances"].to("cpu"))
+    cv2.imshow('vis', out.get_image()[:, :, ::-1])
+
+
 if __name__ == '__main__':
     ds = TumRgbd(sys.argv[1])
-    for i in range(0, 10):
-        o, i, d = ds.next()
-        cv2.imshow('test', i)
-        cv2.waitKey(0)
+    de = FasterRcnn()
+    while not ds.done():
+        odom, rgb, depth = ds.next()
+        detections = de.detect(rgb)
+        _vis(rgb, detections, de.predictor.cfg.DATASETS.TRAIN[0])
+        cv2.waitKey(100)
