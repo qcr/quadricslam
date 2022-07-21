@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 import numpy as np
+import spatialmath as sm
 
 import gtsam
 
@@ -16,8 +17,7 @@ class DataSource(ABC):
 
     @abstractmethod
     def next(
-        self
-    ) -> Tuple[Optional[gtsam.Pose3], np.ndarray, Optional[np.ndarray]]:
+            self) -> Tuple[Optional[sm.SE3], np.ndarray, Optional[np.ndarray]]:
         pass
 
     @abstractmethod
