@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
+from subprocess import check_output
+from typing import List, Optional, Tuple, Union, cast
 import cv2
 import numpy as np
 import os
+import spatialmath as sm
 import sys
-from subprocess import check_output
-from typing import List, Optional, Tuple, Union, cast
 
-import gtsam
 from detectron2 import config as d2c
 from detectron2 import data as d2d
 from detectron2 import engine as d2e
 from detectron2 import model_zoo as d2mz
 from detectron2.utils import visualizer as d2v
+import gtsam
 
 import quadricslam as q
 
@@ -66,16 +67,22 @@ class TumRgbd(q.DataSource):
             for i in np.searchsorted(ts_c, ts_r)
         ]
 
+    def _gt_to_SE3(self, i: int) -> sm.SE3:
+        f = np.asarray(self.data['groundtruth'][i][1:], float)
+        return sm.SE3.Rt(sm.UnitQuaternion(f[6], f[3:6]).SO3(), f[0:3])
+
     def done(self) -> bool:
         return self.data_i == self.data_length
 
     def next(
-        self
-    ) -> Tuple[Optional[gtsam.Pose3], np.ndarray, Optional[np.ndarray]]:
+            self) -> Tuple[Optional[sm.SE3], np.ndarray, Optional[np.ndarray]]:
         i = self.data_i
         self.data_i += 1
-        return None, cv2.imread(
-            os.path.join(self.path, cast(str, self.data['rgb'][i][1]))), None
+        return (sm.SE3() if i == 0 else self._gt_to_SE3(i) *
+                self._gt_to_SE3(i - 1).inv(),
+                cv2.imread(
+                    os.path.join(self.path,
+                                 cast(str, self.data['rgb'][i][1]))), None)
 
     def restart(self) -> None:
         self.data_i = 0
@@ -109,5 +116,6 @@ if __name__ == '__main__':
     while not ds.done():
         odom, rgb, depth = ds.next()
         detections = de.detect(rgb)
-        _vis(rgb, detections, de.predictor.cfg.DATASETS.TRAIN[0])
-        cv2.waitKey(100)
+        print(odom)
+        # _vis(rgb, detections, de.predictor.cfg.DATASETS.TRAIN[0])
+        # cv2.waitKey(100)
