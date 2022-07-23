@@ -11,8 +11,11 @@ class DataAssociator(ABC):
 
     @abstractmethod
     def associate(
-        self, new_detections: List[Detection],
-        unassociated_detections: List[Detection]
-    ) -> Tuple[List[Detection], List[Detection]]:
-        # Returns (new_associated_detections, updated_unassociated_detections)
+        self, new_detections: List[Detection], unassociated: List[Detection],
+        associated: List[Detection]
+    ) -> Tuple[List[Detection], List[Detection], List[Detection]]:
+        # Returns a tuple of:
+        # - list of the newly associated detections
+        # - updated list of associated detections
+        # - updated list of unassociated detections
         pass

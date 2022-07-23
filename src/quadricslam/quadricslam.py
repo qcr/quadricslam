@@ -52,21 +52,29 @@ class QuadricSlam:
             self.step()
 
     def step(self) -> None:
+        pose_key = xi(self.i)
+
         # Get latest data from the scene (odom, images, and detections)
         odom, rgb, depth = self.data_source.next()
         if self.visual_odometry:
             odom = self.visual_odometry.odom(rgb, depth, odom)
-        detections = self.detector.detect(rgb) if self.detector else []
+        detections = self.detector.detect(rgb,
+                                          pose_key) if self.detector else []
+        new_associated, self.associated, self.unassociated = (
+            self.associator.associate(detections, self.associated,
+                                      self.unassociated) if self.associator
+            else (detections, self.associated + detections, self.unassociated))
+        print(len(new_associated))
 
         # # Add new pose to the factor graph
         if self.i == 0:
             self.graph.add(
-                gtsam.PriorFactorPose3(xi(self.i), gtsam.Pose3(),
+                gtsam.PriorFactorPose3(pose_key, gtsam.Pose3(),
                                        self.noise_prior))
         else:
             self.graph.add(
                 gtsam.BetweenFactorPose3(
-                    xi(self.i - 1), xi(self.i),
+                    xi(self.i - 1), pose_key,
                     gtsam.Pose3((odom if odom else SE3()).A), self.noise_odom))
 
         # Add any newly associated quadric observations to the factor graph
@@ -77,7 +85,8 @@ class QuadricSlam:
     def reset(self) -> None:
         self.data_source.restart()
 
-        self.unassociated_detections: List[Detection] = []
+        self.associated: List[Detection] = []
+        self.unassociated: List[Detection] = []
 
         self.graph = gtsam.NonlinearFactorGraph()
         self.estimates = gtsam.Values()
