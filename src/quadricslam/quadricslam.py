@@ -3,8 +3,9 @@ from typing import List, Optional
 import gtsam
 import numpy as np
 
+from .interfaces.data_associator import DataAssociator
 from .interfaces.data_source import DataSource
-from .interfaces.detector import Detector
+from .interfaces.detector import Detection, Detector
 from .interfaces.visual_odometry import VisualOdometry
 
 
@@ -21,15 +22,17 @@ class QuadricSlam:
     def __init__(
         self,
         data_source: DataSource,
-        detector: Optional[Detector] = None,
         visual_odometry: Optional[VisualOdometry] = None,
+        detector: Optional[Detector] = None,
+        associator: Optional[DataAssociator] = None,
         noise_prior: np.ndarray = np.array([0] * 6, dtype=np.float64),
         noise_odom: np.ndarray = np.array([0.01] * 6, dtype=np.float64),
         noise_boxes: np.ndarray = np.array([3] * 4, dtype=np.float64),
     ) -> None:
         self.data_source = data_source
-        self.detector = detector
         self.visual_odometry = visual_odometry
+        self.detector = detector
+        self.associator = associator
 
         self.noise_prior = gtsam.noiseModel.Diagonal.Sigmas(noise_prior)
         self.noise_odom = gtsam.noiseModel.Diagonal.Sigmas(noise_odom)
@@ -73,6 +76,8 @@ class QuadricSlam:
 
     def reset(self) -> None:
         self.data_source.restart()
+
+        self.unassociated_detections: List[Detection] = []
 
         self.graph = gtsam.NonlinearFactorGraph()
         self.estimates = gtsam.Values()
