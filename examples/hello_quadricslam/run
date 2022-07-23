@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+
+from quadricslam import DataSource, Detection, Detector, QuadricSlam, qi, xi
+from spatialmath import SE3
+from typing import List, Optional, Tuple
+import gtsam
+import gtsam_quadrics
+import numpy as np
+
+POSES = [
+    gtsam.PinholeCameraCal3_S2.Lookat(x, [0, 0, 0], [0, 0, 1],
+                                      gtsam.Cal3_S2()).pose() for x in [
+                                          [10, 0, 0],
+                                          [0, -10, 0],
+                                          [-10, 0, 0],
+                                          [0, 10, 0],
+                                          [10, 0, 0],
+                                      ]
+]
+QUADRICS = [
+    gtsam_quadrics.ConstrainedDualQuadric(gtsam.Pose3(), [1, 1, 1]),
+    gtsam_quadrics.ConstrainedDualQuadric(gtsam.Pose3(gtsam.Rot3(), [1, 1, 1]),
+                                          [1, 1, 1])
+]
+
+
+class DummyData(DataSource):
+
+    def __init__(self) -> None:
+        self.restart()
+
+    def done(self) -> bool:
+        return self.i == len(POSES)
+
+    def next(
+        self
+    ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
+        self.i += 1
+        return SE3(POSES[self.i - 1].matrix()), None, None
+
+    def restart(self) -> None:
+        self.i = 0
+
+
+class DummyDetector(Detector):
+    CAL = gtsam.Cal3_S2(525, 525, 0, 160, 120)
+
+    def __init__(self) -> None:
+        self.i = 0
+
+    def detect(self, rgb: Optional[np.ndarray]) -> List[Detection]:
+        i = self.i
+        self.i += 1
+        return [
+            Detection(label=gtsam.Symbol(qi(iq)).string(),
+                      bounds=gtsam_quadrics.QuadricCamera.project(
+                          q, POSES[i], DummyDetector.CAL).bounds().vector())
+            for iq, q in enumerate(QUADRICS)
+        ]
+
+
+if __name__ == '__main__':
+    q = QuadricSlam(DummyData(), DummyDetector())
+    q.spin()

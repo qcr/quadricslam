@@ -17,7 +17,8 @@ class DataSource(ABC):
 
     @abstractmethod
     def next(
-            self) -> Tuple[Optional[sm.SE3], np.ndarray, Optional[np.ndarray]]:
+        self
+    ) -> Tuple[Optional[sm.SE3], Optional[np.ndarray], Optional[np.ndarray]]:
         pass
 
     @abstractmethod

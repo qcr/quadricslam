@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import List, TypedDict
+from typing import List, Optional, TypedDict
 import numpy as np
 
 
 class Detection(TypedDict):
-    class_index: int
+    label: str
     bounds: np.ndarray
 
 
@@ -14,5 +14,5 @@ class Detector(ABC):
         pass
 
     @abstractmethod
-    def detect(self, rgb: np.ndarray) -> List[Detection]:
+    def detect(self, rgb: Optional[np.ndarray]) -> List[Detection]:
         pass
