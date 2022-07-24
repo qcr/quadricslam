@@ -1,6 +1,7 @@
 from spatialmath import SE3
 from typing import List, Optional
 import gtsam
+import gtsam_quadrics
 import numpy as np
 
 from .interfaces.data_associator import DataAssociator
@@ -64,7 +65,6 @@ class QuadricSlam:
             self.associator.associate(detections, self.associated,
                                       self.unassociated) if self.associator
             else (detections, self.associated + detections, self.unassociated))
-        print(len(new_associated))
 
         # # Add new pose to the factor graph
         if self.i == 0:
@@ -77,8 +77,13 @@ class QuadricSlam:
                     xi(self.i - 1), pose_key,
                     gtsam.Pose3((odom if odom else SE3()).A), self.noise_odom))
 
-        # Add any newly associated quadric observations to the factor graph
-        # TODO
+        # Add any newly associated detections to the factor graph
+        for d in new_associated:
+            self.graph.add(
+                gtsam_quadrics.BoundingBoxFactor(
+                    gtsam_quadrics.AlignedBox2(d.bounds),
+                    gtsam.Cal3_S2(self.detector.calib()), d.pose_key,
+                    d.quadric_key, self.noise_boxes))
 
         self.i += 1
 

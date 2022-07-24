@@ -42,6 +42,8 @@ class DummyAssociator(DataAssociator):
             d for d in ds if d.label in set(d.label for d in associated) or
             len([x for x in ds if x.label == d.label]) >= 3
         ]
+        for d in newly_associated:
+            d.quadric_key = gtsam.symbol(d.label[0], int(d.label[1:]))
         return (newly_associated, [
             d for d in new_detections + unassociated + associated
             if d not in newly_associated and d not in associated
@@ -70,10 +72,12 @@ class DummyData(DataSource):
 
 
 class DummyDetector(Detector):
-    CAL = gtsam.Cal3_S2(525, 525, 0, 160, 120)
 
     def __init__(self) -> None:
         self.i = 0
+
+    def calib(self) -> np.ndarray:
+        return np.array([525, 525, 0, 160, 120])
 
     def detect(self, rgb: Optional[np.ndarray],
                pose_key: int) -> List[Detection]:
@@ -82,7 +86,8 @@ class DummyDetector(Detector):
         return [
             Detection(label=gtsam.Symbol(qi(iq)).string(),
                       bounds=gtsam_quadrics.QuadricCamera.project(
-                          q, POSES[i], DummyDetector.CAL).bounds().vector(),
+                          q, POSES[i],
+                          gtsam.Cal3_S2(self.calib())).bounds().vector(),
                       pose_key=pose_key) for iq, q in enumerate(QUADRICS)
         ]
 
