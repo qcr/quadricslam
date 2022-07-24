@@ -1,5 +1,5 @@
 from spatialmath import SE3
-from typing import List, Optional
+from typing import List, Optional, Union
 import gtsam
 import gtsam_quadrics
 import numpy as np
@@ -29,6 +29,10 @@ class QuadricSlam:
         noise_prior: np.ndarray = np.array([0] * 6, dtype=np.float64),
         noise_odom: np.ndarray = np.array([0.01] * 6, dtype=np.float64),
         noise_boxes: np.ndarray = np.array([3] * 4, dtype=np.float64),
+        optimiser_batch: Optional[bool] = None,
+        optimiser_params: Optional[Union[gtsam.ISAM2Params,
+                                         gtsam.LevenbergMarquardtParams,
+                                         gtsam.GaussNewtonParams]] = None
     ) -> None:
         self.data_source = data_source
         self.visual_odometry = visual_odometry
@@ -38,6 +42,27 @@ class QuadricSlam:
         self.noise_prior = gtsam.noiseModel.Diagonal.Sigmas(noise_prior)
         self.noise_odom = gtsam.noiseModel.Diagonal.Sigmas(noise_odom)
         self.noise_boxes = gtsam.noiseModel.Diagonal.Sigmas(noise_boxes)
+
+        if (optimiser_batch == True and
+                type(optimiser_params) == gtsam.ISAM2Params):
+            raise ValueError("ERROR: Can't run batch mode with '%s' params." %
+                             type(optimiser_params))
+        elif (optimiser_batch == False and optimiser_params is not None and
+              type(optimiser_params) != gtsam.ISAM2Params):
+            raise ValueError(
+                "ERROR: Can't run incremental mode with '%s' params." %
+                type(optimiser_params))
+        if optimiser_params is None:
+            optimiser_batch = (True
+                               if optimiser_batch is None else optimiser_batch)
+            optimiser_params = (gtsam.LevenbergMarquardtParams()
+                                if optimiser_batch else gtsam.ISAM2Params())
+        self.optimiser_batch = optimiser_batch
+        self.optimiser_params = optimiser_params
+        self.optimiser_type = (
+            gtsam.ISAM2 if type(optimiser_params) == gtsam.ISAM2 else
+            gtsam.GaussNewtonOptimizer if type(optimiser_params)
+            == gtsam.GaussNewtonParams else gtsam.LevenbergMarquardtOptimizer)
 
         self.reset()
 
@@ -95,5 +120,9 @@ class QuadricSlam:
 
         self.graph = gtsam.NonlinearFactorGraph()
         self.estimates = gtsam.Values()
+
+        self.optimiser = self.optimiser_type(
+            *(([self.graph, self.estimates] if self.optimiser_batch else []) +
+              [self.optimiser_params]))
 
         self.i = 0
