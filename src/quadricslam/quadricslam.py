@@ -1,3 +1,4 @@
+from itertools import groupby
 from spatialmath import SE3
 from typing import List, Optional, Union
 import gtsam
@@ -8,6 +9,34 @@ from .interfaces.data_associator import DataAssociator
 from .interfaces.data_source import DataSource
 from .interfaces.detector import Detection, Detector
 from .interfaces.visual_odometry import VisualOdometry
+
+import pudb
+
+
+def guess_quadric(
+        obs_poses: List[gtsam.Pose3], boxes: List[gtsam_quadrics.AlignedBox2],
+        calib: gtsam.Cal3_S2) -> gtsam_quadrics.ConstrainedDualQuadric:
+    # TODO replace with something less dumb...
+
+    # Get each observation point
+    ps = np.array([op.translation() for op in obs_poses])
+
+    # Get each observation direction
+    # TODO actually use bounding box rather than assuming middle...
+    vs = np.array([op.rotation().matrix()[:, 0] for op in obs_poses])
+
+    # Apply this to compute point closet to where all rays converge:
+    #   https://stackoverflow.com/a/52089698/1386784
+    i_minus_vs = np.eye(3) - (vs[:, :, np.newaxis] @ vs[:, np.newaxis, :])
+    quadric_centroid = np.linalg.lstsq(
+        i_minus_vs.sum(axis=0),
+        (i_minus_vs @ ps[:, :, np.newaxis]).sum(axis=0),
+        rcond=None)[0].squeeze()
+
+    # Fudge the rest for now
+    # TODO do better...
+    return gtsam_quadrics.ConstrainedDualQuadric(
+        gtsam.Rot3(), gtsam.Point3(quadric_centroid), [1, 1, 0.1])
 
 
 def qi(i: int) -> int:
@@ -53,11 +82,10 @@ class QuadricSlam:
                 "ERROR: Can't run incremental mode with '%s' params." %
                 type(optimiser_params))
         if optimiser_params is None:
-            optimiser_batch = (True
-                               if optimiser_batch is None else optimiser_batch)
             optimiser_params = (gtsam.LevenbergMarquardtParams()
-                                if optimiser_batch else gtsam.ISAM2Params())
-        self.optimiser_batch = optimiser_batch
+                                if optimiser_batch is not False else
+                                gtsam.ISAM2Params())
+        self.optimiser_batch = type(optimiser_params) != gtsam.ISAM2
         self.optimiser_params = optimiser_params
         self.optimiser_type = (
             gtsam.ISAM2 if type(optimiser_params) == gtsam.ISAM2 else
@@ -71,11 +99,53 @@ class QuadricSlam:
         # estimate):
         # - guess poses using dead reckoning
         # - guess quadrics using Euclidean mean of all observations
-        pass
+        fs = [self.graph.at(i) for i in range(0, self.graph.nrFactors())]
+
+        # Start with prior factors
+        for pf in [
+                f for f in fs if type(f) == gtsam.PriorFactorPose3 and
+                not self.estimates.exists(f.keys()[0])
+        ]:
+            self.estimates.insert(pf.keys()[0], pf.prior())
+
+        # Add all between factors one-by-one (should never be any remaining,
+        # but if they are just dump them at the origin after the main loop)
+        bfs = [f for f in fs if type(f) == gtsam.BetweenFactorPose3]
+        done = False
+        while not done:
+            bf = next((f for f in bfs if self.estimates.exists(f.keys()[0]) and
+                       not self.estimates.exists(f.keys()[1])), None)
+            if bf is None:
+                done = True
+                continue
+            self.estimates.insert(
+                bf.keys()[1],
+                self.estimates.atPose3(bf.keys()[0]) * bf.measured())
+            bfs.remove(bf)
+        for bf in bfs:
+            self.estimates.insert(bf.keys()[1], gtsam.Pose3())
+
+        # Add all quadric factors
+        _ok = lambda x: x.objectKey()
+        bbs = sorted([
+            f for f in fs if type(f) == gtsam_quadrics.BoundingBoxFactor and
+            not self.estimates.exists(f.objectKey())
+        ],
+                     key=_ok)
+        for qbbs in [list(v) for k, v in groupby(bbs, _ok)]:
+            guess_quadric(
+                [self.estimates.atPose3(bb.poseKey()) for bb in qbbs],
+                [bb.measurement for bb in qbbs],
+                gtsam.Cal3_S2(self.detector.calib())).addToValues(
+                    self.estimates, qbbs[0].objectKey())
 
     def spin(self) -> None:
         while not self.data_source.done():
             self.step()
+
+        if self.optimiser_batch:
+            self.guess_initial_values()
+            self.estimates = self.optimiser.optimize()
 
     def step(self) -> None:
         pose_key = xi(self.i)
