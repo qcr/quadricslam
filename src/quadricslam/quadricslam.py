@@ -1,4 +1,5 @@
 from itertools import groupby
+from types import FunctionType
 from spatialmath import SE3
 from typing import List, Optional, Union
 import gtsam
@@ -49,20 +50,20 @@ def xi(i: int) -> int:
 
 class QuadricSlam:
 
-    def __init__(
-        self,
-        data_source: DataSource,
-        visual_odometry: Optional[VisualOdometry] = None,
-        detector: Optional[Detector] = None,
-        associator: Optional[DataAssociator] = None,
-        noise_prior: np.ndarray = np.array([0] * 6, dtype=np.float64),
-        noise_odom: np.ndarray = np.array([0.01] * 6, dtype=np.float64),
-        noise_boxes: np.ndarray = np.array([3] * 4, dtype=np.float64),
-        optimiser_batch: Optional[bool] = None,
-        optimiser_params: Optional[Union[gtsam.ISAM2Params,
-                                         gtsam.LevenbergMarquardtParams,
-                                         gtsam.GaussNewtonParams]] = None
-    ) -> None:
+    def __init__(self,
+                 data_source: DataSource,
+                 visual_odometry: Optional[VisualOdometry] = None,
+                 detector: Optional[Detector] = None,
+                 associator: Optional[DataAssociator] = None,
+                 noise_prior: np.ndarray = np.array([0] * 6, dtype=np.float64),
+                 noise_odom: np.ndarray = np.array([0.01] * 6,
+                                                   dtype=np.float64),
+                 noise_boxes: np.ndarray = np.array([3] * 4, dtype=np.float64),
+                 optimiser_batch: Optional[bool] = None,
+                 optimiser_params: Optional[
+                     Union[gtsam.ISAM2Params, gtsam.LevenbergMarquardtParams,
+                           gtsam.GaussNewtonParams]] = None,
+                 on_new_estimate: Optional[FunctionType] = None) -> None:
         self.data_source = data_source
         self.visual_odometry = visual_odometry
         self.detector = detector
@@ -91,6 +92,8 @@ class QuadricSlam:
             gtsam.ISAM2 if type(optimiser_params) == gtsam.ISAM2 else
             gtsam.GaussNewtonOptimizer if type(optimiser_params)
             == gtsam.GaussNewtonParams else gtsam.LevenbergMarquardtOptimizer)
+
+        self.on_new_estimate = on_new_estimate
 
         self.reset()
 
@@ -145,7 +148,10 @@ class QuadricSlam:
 
         if self.optimiser_batch:
             self.guess_initial_values()
-            self.estimates = self.optimiser.optimize()
+            # self.estimates = self.optimiser.optimize()
+
+        if self.on_new_estimate:
+            self.on_new_estimate(self)
 
     def step(self) -> None:
         pose_key = xi(self.i)
