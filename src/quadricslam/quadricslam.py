@@ -1,7 +1,7 @@
 from itertools import groupby
 from types import FunctionType
 from spatialmath import SE3
-from typing import Callable, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 import gtsam
 import gtsam_quadrics
 import numpy as np
@@ -63,7 +63,8 @@ class QuadricSlam:
         optimiser_params: Optional[Union[gtsam.ISAM2Params,
                                          gtsam.LevenbergMarquardtParams,
                                          gtsam.GaussNewtonParams]] = None,
-        on_new_estimate: Optional[Callable[[gtsam.Values, bool], None]] = None
+        on_new_estimate: Optional[Callable[
+            [gtsam.Values, Dict[int, str], bool], None]] = None
     ) -> None:
         self.data_source = data_source
         self.visual_odometry = visual_odometry
@@ -151,8 +152,9 @@ class QuadricSlam:
             self.guess_initial_values()
             # self.estimates = self.optimiser.optimize()
 
+        print(self.labels)
         if self.on_new_estimate:
-            self.on_new_estimate(self.estimates, True)
+            self.on_new_estimate(self.estimates, self.labels, True)
 
     def step(self) -> None:
         pose_key = xi(self.i)
@@ -167,6 +169,14 @@ class QuadricSlam:
             self.associator.associate(detections, self.associated,
                                       self.unassociated) if self.associator
             else (detections, self.associated + detections, self.unassociated))
+
+        # Extract some labels
+        # TODO handle cases where different labels used for a single quadric???
+        self.labels = {
+            d.quadric_key: d.label
+            for d in self.associated
+            if d.quadric_key is not None
+        }
 
         # # Add new pose to the factor graph
         if self.i == 0:
@@ -194,6 +204,8 @@ class QuadricSlam:
 
         self.associated: List[Detection] = []
         self.unassociated: List[Detection] = []
+
+        self.labels: Dict[int, str] = {}
 
         self.graph = gtsam.NonlinearFactorGraph()
         self.estimates = gtsam.Values()

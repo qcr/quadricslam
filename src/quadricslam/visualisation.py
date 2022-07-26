@@ -1,3 +1,5 @@
+from distinctipy import get_colors
+from typing import Dict
 import gtsam
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,7 +41,13 @@ def _set_axes_equal(ax):
     ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
 
-def visualise(values=gtsam.Values, block: bool = False):
+def visualise(values: gtsam.Values,
+              labels: Dict[int, str],
+              block: bool = False):
+    # Generate colour swatch for our labels
+    ls = set(labels.values())
+    cs = {l: c for l, c in zip(ls, get_colors(len(ls)))}
+
     # Get latest pose & quadric estimates
     full_ps, full_qs = ps_and_qs_from_values(values)
     ps = [p.matrix() for p in full_ps.values()]
@@ -65,8 +73,8 @@ def visualise(values=gtsam.Values, block: bool = False):
     plt.quiver(pxs, pys, pzs, pyus, pyvs, pyws, color='g')
     plt.quiver(pxs, pys, pzs, pzus, pzvs, pzws, color='b')
 
-    for q in full_qs.values():
-        visualise_ellipsoid(q.pose().matrix(), q.radii(), 'k')
+    for k, q in full_qs.items():
+        visualise_ellipsoid(q.pose().matrix(), q.radii(), cs[labels[k]])
 
     _set_axes_equal(ax)
     plt.show(block=block)

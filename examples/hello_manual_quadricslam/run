@@ -70,4 +70,4 @@ if __name__ == '__main__':
     r = gtsam.LevenbergMarquardtOptimizer(graph, values).optimize()
 
     print(r)
-    visualise(r, True)
+    visualise(r, {Q(i): gtsam.Symbol(Q(i)).string() for i in [0, 1]}, True)

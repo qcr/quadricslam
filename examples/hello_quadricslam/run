@@ -93,8 +93,10 @@ class DummyDetector(Detector):
 
 
 if __name__ == '__main__':
-    q = QuadricSlam(data_source=DummyData(),
-                    detector=DummyDetector(),
-                    associator=DummyAssociator(),
-                    on_new_estimate=lambda vals, done: visualise(vals, done))
+    q = QuadricSlam(
+        data_source=DummyData(),
+        detector=DummyDetector(),
+        associator=DummyAssociator(),
+        on_new_estimate=(
+            lambda vals, labels, done: visualise(vals, labels, done)))
     q.spin()
