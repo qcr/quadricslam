@@ -70,6 +70,12 @@ class QuadricSlam:
         self.data_source = data_source
         self.visual_odometry = visual_odometry
         self.detector = detector
+
+        # TODO this needs a default data associator, we can't do anything
+        # meaningful if this is None...
+        if associator is None:
+            raise NotImplementedError('No default data associator yet exists, '
+                                      'so you must provide one.')
         self.associator = associator
 
         self.initial_pose = (gtsam.Pose3() if initial_pose is None else
@@ -171,8 +177,7 @@ class QuadricSlam:
                                           pose_key) if self.detector else []
         new_associated, self.associated, self.unassociated = (
             self.associator.associate(detections, self.associated,
-                                      self.unassociated) if self.associator
-            else (detections, self.associated + detections, self.unassociated))
+                                      self.unassociated))
 
         # Extract some labels
         # TODO handle cases where different labels used for a single quadric???

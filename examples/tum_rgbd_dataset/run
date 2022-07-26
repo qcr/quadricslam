@@ -141,6 +141,7 @@ if __name__ == '__main__':
     q = QuadricSlam(
         data_source=TumRgbd(path=dataset_path),
         detector=FasterRcnn(camera_calib=camera_calib),
+        # TODO needs a viable data association approach
         on_new_estimate=(
             lambda vals, labels, done: visualise(vals, labels, done)))
     q.spin()
