@@ -181,7 +181,7 @@ class QuadricSlam:
         }
 
         # # Add new pose to the factor graph
-        if self.i == 0:
+        if self.i == 0 or self.prev_odom == None:
             self.graph.add(
                 gtsam.PriorFactorPose3(pose_key, self.initial_pose,
                                        self.noise_prior))
@@ -189,7 +189,9 @@ class QuadricSlam:
             self.graph.add(
                 gtsam.BetweenFactorPose3(
                     xi(self.i - 1), pose_key,
-                    gtsam.Pose3((odom if odom else SE3()).A), self.noise_odom))
+                    gtsam.Pose3(
+                        (self.prev_odom.inv() * odom if odom else SE3()).A),
+                    self.noise_odom))
 
         # Add any newly associated detections to the factor graph
         for d in new_associated:
@@ -200,6 +202,7 @@ class QuadricSlam:
                     d.quadric_key, self.noise_boxes))
 
         self.i += 1
+        self.prev_odom = SE3() if odom is None else odom
 
     def reset(self) -> None:
         self.data_source.restart()
@@ -217,3 +220,4 @@ class QuadricSlam:
               [self.optimiser_params]))
 
         self.i = 0
+        self.prev_odom = None
