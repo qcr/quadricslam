@@ -69,7 +69,13 @@ def visualise(values: gtsam.Values,
     )
 
     ax = plt.gca(projection='3d')
-    plt.plot(pxs, pys, pzs, color='k')
+    alphas = np.linspace(0.2, 1, len(ps))
+    for i in range(1, len(ps)):
+        plt.plot(pxs[i - 1:i + 1],
+                 pys[i - 1:i + 1],
+                 pzs[i - 1:i + 1],
+                 color='k',
+                 alpha=alphas[i])
     plt.quiver(pxs, pys, pzs, pxus, pxvs, pxws, color='r')
     plt.quiver(pxs, pys, pzs, pyus, pyvs, pyws, color='g')
     plt.quiver(pxs, pys, pzs, pzus, pzvs, pzws, color='b')
