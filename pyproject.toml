@@ -1,7 +1,7 @@
 [project]
 name = "quadricslam"
-version = "0.0.1"
-description = "QuadricSLAM: SLAM system with quadric landmarks"
+version = "0.1.0"
+description = "QuadricSLAM: SLAM systems with quadric landmarks"
 readme = "./README.md"
 license = { file = "./LICENSE.txt" }
 authors = [{name = "Lachlan Nicholson", email = "lachlan.nicholson@hdr.qut.edu.au"}]
