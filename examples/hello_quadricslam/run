@@ -97,6 +97,7 @@ if __name__ == '__main__':
         data_source=DummyData(),
         detector=DummyDetector(),
         associator=DummyAssociator(),
+        initial_pose=POSES[0].matrix(),
         on_new_estimate=(
             lambda vals, labels, done: visualise(vals, labels, done)))
     q.spin()

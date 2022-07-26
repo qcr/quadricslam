@@ -56,6 +56,7 @@ class QuadricSlam:
         visual_odometry: Optional[VisualOdometry] = None,
         detector: Optional[Detector] = None,
         associator: Optional[DataAssociator] = None,
+        initial_pose: Optional[np.ndarray] = None,
         noise_prior: np.ndarray = np.array([0] * 6, dtype=np.float64),
         noise_odom: np.ndarray = np.array([0.01] * 6, dtype=np.float64),
         noise_boxes: np.ndarray = np.array([3] * 4, dtype=np.float64),
@@ -71,6 +72,8 @@ class QuadricSlam:
         self.detector = detector
         self.associator = associator
 
+        self.initial_pose = (gtsam.Pose3() if initial_pose is None else
+                             gtsam.Pose3(initial_pose))
         self.noise_prior = gtsam.noiseModel.Diagonal.Sigmas(noise_prior)
         self.noise_odom = gtsam.noiseModel.Diagonal.Sigmas(noise_odom)
         self.noise_boxes = gtsam.noiseModel.Diagonal.Sigmas(noise_boxes)
@@ -180,7 +183,7 @@ class QuadricSlam:
         # # Add new pose to the factor graph
         if self.i == 0:
             self.graph.add(
-                gtsam.PriorFactorPose3(pose_key, gtsam.Pose3(),
+                gtsam.PriorFactorPose3(pose_key, self.initial_pose,
                                        self.noise_prior))
         else:
             self.graph.add(
