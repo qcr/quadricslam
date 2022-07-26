@@ -17,6 +17,7 @@ The key features of this repository are:
   q = QuadricSLAM(data_source=MyDataSource(), detector=MyDetector(), associator=MyDataAssociator())
   q.spin()
   ```
+- basic Matplotlib visualisation routines
 - a rich set of plug-n-play examples of the QuadricSLAM system:
   - simple "hello_world" examples with dummy data
   - running on the [TUM RGB-D dataset](https://vision.in.tum.de/data/datasets/rgbd-dataset), as done in [our paper](#citing-our-work) TODO
@@ -26,19 +27,39 @@ The key features of this repository are:
 
 We expect this repository to be active and continually improved upon. If you have any feature requests or experience any bugs, don't hesitate to let us know. Our code is free to use, and licensed under BSD-3. We simply ask that you [cite our work](#citing-our-work) if you use QuadricSLAM in your own research.
 
-## Installation
+## Installation and using the library
 
-## Using the examples in this repository
-
-These examples all assume that you have our [GTSAM Quadrics](https://github.com/qcr/gtsam-quadrics) installed. It is [available on PyPI](https://pypi.org/project/gtsam-quadrics/), and can be installed via:
+Pre-build wheels of this library are [available on PyPI](https://pypi.org/project/quadricslam/) for most Linux systems, as well as source distributions. Install the library with:
 
 ```
-pip install gtsam_quadrics
+pip install quadricslam
 ```
 
-Other installation methods, like from source and Conda are documented in the [GTSAM Quadrics README](https://github.com/qcr/gtsam-quadrics#installation).
+From here basic custom QuadricSLAM systems can be setup by implementing and integrating the following abstract classes:
 
-## Details of the available examples
+```python
+from quadricslam import DataSource, Detector, Associator, visualise
+
+class MyDataSource(DataSource):
+  ...
+
+class MyDetector(Detector):
+  ...
+
+class MyAssociator(Associator):
+  ...
+
+q = QuadricSlam(data_source=MyDataSource(),
+                detector=MyDetector(),
+                associator=MyAssociator(),
+                on_new_estimate=lambda vals, labels, done: visualise(vals, labels, done)))
+                )
+q.spin()
+```
+
+The examples described below also provide code showing how to create customisations for a range of different scenarios.
+
+## Running the examples from this repository
 
 TODO when the examples are actually done
 
