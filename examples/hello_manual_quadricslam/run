@@ -4,6 +4,8 @@ import gtsam
 import gtsam_quadrics
 import numpy as np
 
+from quadricslam import visualise
+
 if __name__ == '__main__':
     # Noise models & shortcuts for generating symbols
     NOISE_PRIOR = gtsam.noiseModel.Diagonal.Sigmas(
@@ -66,4 +68,6 @@ if __name__ == '__main__':
         q.addToValues(values, Q(i))
 
     r = gtsam.LevenbergMarquardtOptimizer(graph, values).optimize()
+
     print(r)
+    visualise(r, True)
