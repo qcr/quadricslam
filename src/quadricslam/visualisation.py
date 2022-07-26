@@ -83,6 +83,9 @@ def visualise(values: gtsam.Values,
     ])
 
     # Show the final thing, blocking if requested
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
     _set_axes_equal(ax)
     plt.show(block=block)
 
