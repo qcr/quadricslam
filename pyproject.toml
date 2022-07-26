@@ -1,6 +1,6 @@
 [project]
 name = "quadricslam"
-version = "0.1.0"
+version = "0.1.1"
 description = "QuadricSLAM: SLAM systems with quadric landmarks"
 readme = "./README.md"
 license = { file = "./LICENSE.txt" }
