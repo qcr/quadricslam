@@ -28,38 +28,42 @@ def visualise(inst: QuadricSlam, block: bool = False):
         [p[2, 2] for p in ps],
     )
 
-    plt.gca(projection='3d')
-    # plt.plot(pxs, pys, pzs, color='k')
-    # plt.quiver(pxs, pys, pzs, pxus, pxvs, pxws, color='r')
-    # plt.quiver(pxs, pys, pzs, pyus, pyvs, pyws, color='g')
-    # plt.quiver(pxs, pys, pzs, pzus, pzvs, pzws, color='b')
+    ax = plt.gca(projection='3d')
+    ax.set_box_aspect([1, 1, 1])
+    plt.plot(pxs, pys, pzs, color='k')
+    plt.quiver(pxs, pys, pzs, pxus, pxvs, pxws, color='r')
+    plt.quiver(pxs, pys, pzs, pyus, pyvs, pyws, color='g')
+    plt.quiver(pxs, pys, pzs, pzus, pzvs, pzws, color='b')
 
     for q in full_qs.values():
         visualise_ellipsoid(q.pose().matrix(), q.radii(), 'k')
 
     plt.show(block=block)
 
-    # pu.db
-
 
 def visualise_ellipsoid(pose: np.ndarray, radii: np.ndarray, color):
     # Generate ellipsoid of appropriate size at origin
-    u, v = np.linspace(0, 2 * np.pi, 100), np.linspace(0, np.pi, 100)
+    SZ = 100
+    u, v = np.linspace(0, 2 * np.pi, SZ), np.linspace(0, np.pi, SZ)
     x, y, z = (radii[0] * np.outer(np.cos(u), np.sin(v)),
                radii[1] * np.outer(np.sin(u), np.sin(v)),
                radii[2] * np.outer(np.ones_like(u), np.cos(v)))
 
     # Rotate the ellipsoid, then translate to centroid
-    # TODO
+    ps = pose @ np.vstack([
+        x.reshape(-1),
+        y.reshape(-1),
+        z.reshape(-1),
+        np.ones(z.reshape(-1).shape)
+    ])
 
     # Plot the ellipsoid
-    plt.gca().plot_surface(
-        x,
-        y,
-        z,
+    plt.gca().plot_wireframe(
+        ps[0, :].reshape(SZ, SZ),
+        ps[1, :].reshape(SZ, SZ),
+        ps[2, :].reshape(SZ, SZ),
         rstride=4,
         cstride=4,
         edgecolors=color,
-        alpha=0,
         linewidth=0.5,
     )
