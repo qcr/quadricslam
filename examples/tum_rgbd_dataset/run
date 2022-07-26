@@ -15,10 +15,12 @@ from detectron2 import model_zoo as d2mz
 from detectron2.utils import visualizer as d2v
 import gtsam
 
-import quadricslam as q
+from quadricslam import DataSource, Detection, Detector, QuadricSlam, visualise
+
+import pudb
 
 
-class TumRgbd(q.DataSource):
+class TumRgbd(DataSource):
 
     data_list_type = List[List[Union[float, str]]]
 
@@ -88,34 +90,57 @@ class TumRgbd(q.DataSource):
         self.data_i = 0
 
 
-class FasterRcnn(q.Detector):
+class FasterRcnn(Detector):
 
     def __init__(
             self,
+            camera_calib: np.ndarray,
             zoo_model: str = 'COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml',
             detection_thresh: float = 0.5) -> None:
+        self.camera_calib = camera_calib
+
         c = d2c.get_cfg()
         c.merge_from_file(d2mz.get_config_file(zoo_model))
         c.MODEL.ROI_HEADS.SCORE_THRESH_TEST = detection_thresh
         c.MODEL.WEIGHTS = d2mz.get_checkpoint_url(zoo_model)
         self.predictor = d2e.DefaultPredictor(c)
+        self.classes = d2d.MetadataCatalog.get(
+            self.predictor.cfg.DATASETS.TRAIN[0]).thing_classes
 
-    def detect(self, rgb: np.ndarray) -> None:
-        return self.predictor(rgb)
+    def calib(self) -> np.ndarray:
+        return self.camera_calib
 
-
-def _vis(rgb, detections, cfg):
-    v = d2v.Visualizer(rgb[:, :, ::-1], d2d.MetadataCatalog.get(cfg))
-    out = v.draw_instance_predictions(detections["instances"].to("cpu"))
-    cv2.imshow('vis', out.get_image()[:, :, ::-1])
+    def detect(self, rgb: Optional[np.ndarray],
+               pose_key: int) -> List[Detection]:
+        inst = self.predictor(rgb)['instances']
+        pred_classes = inst.get('pred_classes').detach().cpu().numpy()
+        pred_boxes = inst.get('pred_boxes').tensor.detach().cpu().numpy()
+        return [
+            Detection(label=self.classes[pred_classes[i]],
+                      bounds=pred_boxes[i],
+                      pose_key=pose_key) for i in range(0, len(pred_classes))
+        ]
 
 
 if __name__ == '__main__':
-    ds = TumRgbd(sys.argv[1])
-    de = FasterRcnn()
-    while not ds.done():
-        odom, rgb, depth = ds.next()
-        detections = de.detect(rgb)
-        print(odom)
-        # _vis(rgb, detections, de.predictor.cfg.DATASETS.TRAIN[0])
-        # cv2.waitKey(100)
+    # Confirm dataset path is provided
+    if len(sys.argv) != 2:
+        print("Path to dataset is a required argument.")
+        sys.exit(1)
+    dataset_path = sys.argv[1]
+
+    # Pull camera calibration parameters from:
+    #  https://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats#intrinsic_camera_calibration_of_the_kinect
+    camera_calib = np.array(
+        [517.3, 516.5, 0, 318.6, 255.3] if 'freiburg1' in
+        dataset_path else [520.9, 521.0, 0, 325.1, 249.7] if 'freiburg2' in
+        dataset_path else [535.4, 539.2, 0, 320.1, 247.6] if 'freiburg3' in
+        dataset_path else [525.0, 525.0, 0, 319.5, 239.5])
+
+    # Run QuadricSLAM
+    q = QuadricSlam(
+        data_source=TumRgbd(path=dataset_path),
+        detector=FasterRcnn(camera_calib=camera_calib),
+        on_new_estimate=(
+            lambda vals, labels, done: visualise(vals, labels, done)))
+    q.spin()
