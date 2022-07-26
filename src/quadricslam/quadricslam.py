@@ -152,7 +152,6 @@ class QuadricSlam:
             self.guess_initial_values()
             # self.estimates = self.optimiser.optimize()
 
-        print(self.labels)
         if self.on_new_estimate:
             self.on_new_estimate(self.estimates, self.labels, True)
 

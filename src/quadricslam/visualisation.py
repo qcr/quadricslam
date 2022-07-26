@@ -1,4 +1,5 @@
 from distinctipy import get_colors
+from matplotlib.patches import Patch
 from typing import Dict
 import gtsam
 import matplotlib.pyplot as plt
@@ -76,6 +77,12 @@ def visualise(values: gtsam.Values,
     for k, q in full_qs.items():
         visualise_ellipsoid(q.pose().matrix(), q.radii(), cs[labels[k]])
 
+    # Plot a legend for quadric colours
+    ax.legend(handles=[
+        Patch(facecolor=c, edgecolor=c, label=l) for l, c in cs.items()
+    ])
+
+    # Show the final thing, blocking if requested
     _set_axes_equal(ax)
     plt.show(block=block)
 
