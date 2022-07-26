@@ -151,7 +151,7 @@ class QuadricSlam:
             # self.estimates = self.optimiser.optimize()
 
         if self.on_new_estimate:
-            self.on_new_estimate(self)
+            self.on_new_estimate(self, True)
 
     def step(self) -> None:
         pose_key = xi(self.i)
