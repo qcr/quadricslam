@@ -153,7 +153,9 @@ class QuadricSlam:
 
         if self.optimiser_batch:
             self.guess_initial_values()
-            # self.estimates = self.optimiser.optimize()
+            self.optimiser = self.optimiser_type(self.graph, self.estimates,
+                                                 self.optimiser_params)
+            self.estimates = self.optimiser.optimize()
 
         if self.on_new_estimate:
             self.on_new_estimate(self.estimates, self.labels, True)
@@ -215,9 +217,8 @@ class QuadricSlam:
         self.graph = gtsam.NonlinearFactorGraph()
         self.estimates = gtsam.Values()
 
-        self.optimiser = self.optimiser_type(
-            *(([self.graph, self.estimates] if self.optimiser_batch else []) +
-              [self.optimiser_params]))
+        self.optimiser = (None if self.optimiser_batch else
+                          self.optimiser_type(self.optimiser_params))
 
         self.i = 0
         self.prev_odom = None
