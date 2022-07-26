@@ -1,0 +1,19 @@
+[project]
+name = "quadricslam"
+version = "0.1.0"
+description = "QuadricSLAM: SLAM systems with quadric landmarks"
+readme = "./README.md"
+license = { file = "./LICENSE.txt" }
+authors = [{name = "Lachlan Nicholson", email = "lachlan.nicholson@hdr.qut.edu.au"}]
+maintainers = [{name = "Ben Talbot", email = "b.talbot@qut.edu.au"}]
+dependencies = [ "gtsam-quadrics" ]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3"
+]
+
+[project.urls]
+Homepage = "https://github.com/qcr/quadricslam"
+Issues = "https://github.com/qcr/quadricslam/issues"

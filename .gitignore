@@ -1,1 +1,6 @@
 *.sw*
+
+__pycache__/
+*.egg-info/
+
+examples/tum_rgbd_dataset/rgbd_dataset_*
