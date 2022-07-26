@@ -46,10 +46,10 @@ class DummyAssociator(DataAssociator):
             d.quadric_key = gtsam.symbol(d.label[0], int(d.label[1:]))
         return (newly_associated, [
             d for d in new_detections + unassociated + associated
-            if d not in newly_associated and d not in associated
+            if d in newly_associated or d in associated
         ], [
             d for d in new_detections + unassociated + associated
-            if d in newly_associated or d in associated
+            if d not in newly_associated and d not in associated
         ])
 
 
