@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
-from .detector import Detection
+from ..detector import Detection
 
 
 class DataAssociator(ABC):

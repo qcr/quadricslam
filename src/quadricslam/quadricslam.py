@@ -6,10 +6,10 @@ import gtsam
 import gtsam_quadrics
 import numpy as np
 
-from .interfaces.data_associator import DataAssociator
-from .interfaces.data_source import DataSource
-from .interfaces.detector import Detection, Detector
-from .interfaces.visual_odometry import VisualOdometry
+from .data_associator import DataAssociator
+from .data_source import DataSource
+from .detector import Detection, Detector
+from .visual_odometry import VisualOdometry
 
 import pudb
 
