@@ -63,6 +63,21 @@ The examples described below also provide code showing how to create customisati
 
 TODO when the examples are actually done
 
+### `hello_manual_quadricslam` and `hello_quadricslam`
+
+TODO
+
+### `tum_rgbd_dataset`
+
+TODO
+
+<p align="center">
+<img alt="TUM RGBD QuadricSLAM still 1" src="https://github.com/qcr/quadricslam/wiki/quadricslam_still1.png" width="400"/>
+<img alt="TUM RGBD QuadricSLAM still 2" src="https://github.com/qcr/quadricslam/wiki/quadricslam_still2.png"  width="400"/>
+</p>
+
+### TODO RealSense and BenchBot examples
+
 ## Citing our work
 
 If you are using this library in academic work, please cite the [publication](https://ieeexplore.ieee.org/document/8440105):
