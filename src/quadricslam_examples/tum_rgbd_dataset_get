@@ -6,7 +6,9 @@ INFO='\033[0;35m[INFO] '
 WARN='\033[0;33m[WARN] '
 NC='\033[0m'
 
-datasets=(
+DEFAULT_PATH="/var/tmp/tum_rgbd"
+
+DATASETS=(
   "https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_desk.tgz"
   "https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_desk2.tgz"
   "https://vision.in.tum.de/rgbd/dataset/freiburg2/rgbd_dataset_freiburg2_desk.tgz"
@@ -16,10 +18,10 @@ datasets=(
 if [ -z "${1:-}" ]; then
   printf "${WARN}No target directory provided, falling back to default${NC}\n"
 fi
-dp="$(realpath ${1:-$(dirname $0)})"
+dp="$(realpath ${1:-$DEFAULT_PATH})"
 
 printf "${INFO}Downloading TUM RGBD datasets to '${dp}':${NC}\n"
-for i in "${!datasets[@]}"; do
-  printf "${INFO}[$((i+1))/${#datasets[@]}] ${datasets[$i]}${NC}\n"
-  wget "${datasets[$i]}" -O - | tar -xz -C "${dp}"
+for i in "${!DATASETS[@]}"; do
+  printf "${INFO}[$((i+1))/${#DATASETS[@]}] ${DATASETS[$i]}${NC}\n"
+  wget "${DATASETS[$i]}" -O - | tar -xz -C "${dp}"
 done
