@@ -27,14 +27,47 @@ class RealSense(DataSource):
                                   15)
         self.pipeline = rs.pipeline()
 
+        # Set some defaults
+        self.rgb_calib = None
+        self.depth_calib = None
+
     def __enter__(self) -> 'RealSense':
+        # Start the camera
+        profile = self.pipeline.start(self.config)
+
         # Store the camera intrinsics
+        i = profile.get_stream(
+            rs.stream.color).as_video_stream_profile().get_intrinsics()
+        self.rgb_calib = np.array([i.fx, i.fy, 0, i.ppx, i.ppy])
 
         # Get the depth scale
-
+        self.depth_calib = float(
+            profile.get_device().first_depth_sensor().get_depth_scale())
         return self
+
+    def calib_depth(self) -> float:
+        if self.depth_calib is None:
+            raise RuntimeError("No depth calib found. Is camera running?")
+        return self.depth_calib
+
+    def calib_rgb(self) -> np.ndarray:
+        if self.rgb_calib is None:
+            raise RuntimeError("No RGB calib found. Is camera running?")
+        return self.rgb_calib
 
     def next(
         self
     ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
-        return super().next()
+        # TODO extract odom estimate for 435i
+        odom = None
+        color = None
+        depth = None
+        while color is None or depth is None:
+            fs = self.pipeline.wait_for_frames()
+            color = fs.get_color_frame()
+            depth = fs.get_depth_frame()
+
+        color = np.asanyarray(color.get_data())
+        depth = np.array(self.calib_depth() * np.asanyarray(depth.get_data()),
+                         dtype=np.float32)
+        return odom, color, depth
