@@ -58,6 +58,9 @@ class DummyData(DataSource):
     def __init__(self) -> None:
         self.restart()
 
+    def calib_rgb(self) -> np.ndarray:
+        return np.array([525, 525, 0, 160, 120])
+
     def done(self) -> bool:
         return self.i == len(POSES)
 
@@ -76,10 +79,7 @@ class DummyDetector(Detector):
     def __init__(self) -> None:
         self.i = 0
 
-    def calib(self) -> np.ndarray:
-        return np.array([525, 525, 0, 160, 120])
-
-    def detect(self, rgb: Optional[np.ndarray],
+    def detect(self, rgb: Optional[np.ndarray], rgb_calib: np.ndarray,
                pose_key: int) -> List[Detection]:
         i = self.i
         self.i += 1
@@ -87,7 +87,7 @@ class DummyDetector(Detector):
             Detection(label=gtsam.Symbol(qi(iq)).string(),
                       bounds=gtsam_quadrics.QuadricCamera.project(
                           q, POSES[i],
-                          gtsam.Cal3_S2(self.calib())).bounds().vector(),
+                          gtsam.Cal3_S2(rgb_calib)).bounds().vector(),
                       pose_key=pose_key) for iq, q in enumerate(QUADRICS)
         ]
 

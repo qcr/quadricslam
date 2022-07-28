@@ -150,7 +150,7 @@ class QuadricSlam:
             guess_quadric(
                 [self.estimates.atPose3(bb.poseKey()) for bb in qbbs],
                 [bb.measurement for bb in qbbs],
-                gtsam.Cal3_S2(self.detector.calib())).addToValues(
+                gtsam.Cal3_S2(self.data_source.calib_rgb())).addToValues(
                     self.estimates, qbbs[0].objectKey())
 
     def spin(self) -> None:

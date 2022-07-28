@@ -22,11 +22,6 @@ class Detector(ABC):
         pass
 
     @abstractmethod
-    def calib(self) -> np.ndarray:
-        # Vector representing the calibration (fx, fy, skew, u0, v0)
-        return np.array([1, 1, 0, 0, 0])
-
-    @abstractmethod
-    def detect(self, rgb: Optional[np.ndarray],
+    def detect(self, rgb: Optional[np.ndarray], rgb_calib: np.ndarray,
                pose_key: int) -> List[Detection]:
         pass

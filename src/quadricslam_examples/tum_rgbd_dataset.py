@@ -24,11 +24,14 @@ class TumRgbd(DataSource):
 
     data_list_type = List[List[Union[float, str]]]
 
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str, rgb_calib: np.ndarray) -> None:
         # Validate path exists
         self.path = path
         if not os.path.isdir(self.path):
             raise ValueError("Path '%s' does not exist." % self.path)
+
+        # Store camera calibration
+        self.rgb_calib = rgb_calib
 
         # Derive synced dataset (aligning on depth as it always has the least
         # data)
@@ -73,6 +76,9 @@ class TumRgbd(DataSource):
         f = np.asarray(self.data['groundtruth'][i][1:], float)
         return sm.SE3.Rt(sm.UnitQuaternion(f[6], f[3:6]).SO3(), f[0:3])
 
+    def calib_rgb(self) -> np.ndarray:
+        return self.rgb_calib
+
     def done(self) -> bool:
         return self.data_i == self.data_length
 
@@ -94,11 +100,8 @@ class FasterRcnn(Detector):
 
     def __init__(
             self,
-            camera_calib: np.ndarray,
             zoo_model: str = 'COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml',
             detection_thresh: float = 0.5) -> None:
-        self.camera_calib = camera_calib
-
         c = d2c.get_cfg()
         c.merge_from_file(d2mz.get_config_file(zoo_model))
         c.MODEL.ROI_HEADS.SCORE_THRESH_TEST = detection_thresh
@@ -106,9 +109,6 @@ class FasterRcnn(Detector):
         self.predictor = d2e.DefaultPredictor(c)
         self.classes = d2d.MetadataCatalog.get(
             self.predictor.cfg.DATASETS.TRAIN[0]).thing_classes
-
-    def calib(self) -> np.ndarray:
-        return self.camera_calib
 
     def detect(self, rgb: Optional[np.ndarray],
                pose_key: int) -> List[Detection]:
@@ -139,8 +139,8 @@ if __name__ == '__main__':
 
     # Run QuadricSLAM
     q = QuadricSlam(
-        data_source=TumRgbd(path=dataset_path),
-        detector=FasterRcnn(camera_calib=camera_calib),
+        data_source=TumRgbd(path=dataset_path, rgb_calib=camera_calib),
+        detector=FasterRcnn(),
         # TODO needs a viable data association approach
         on_new_estimate=(
             lambda vals, labels, done: visualise(vals, labels, done)))
