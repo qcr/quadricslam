@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
-from quadricslam import Detection, QuadricSlam
+from ..quadricslam_states import Detection, QuadricSlamState
 
 
 class DataAssociator(ABC):
@@ -11,7 +11,7 @@ class DataAssociator(ABC):
 
     @abstractmethod
     def associate(
-        self, inst: QuadricSlam
+        self, state: QuadricSlamState
     ) -> Tuple[List[Detection], List[Detection], List[Detection]]:
         # Returns a tuple of:
         # - list of the newly associated detections

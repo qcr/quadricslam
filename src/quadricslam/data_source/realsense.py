@@ -2,8 +2,8 @@ from spatialmath import SE3
 from typing import Optional, Tuple
 import numpy as np
 
+from ..quadricslam_states import QuadricSlamState
 from . import DataSource
-from .. import QuadricSlam
 
 try:
     import pyrealsense2 as rs
@@ -60,7 +60,7 @@ class RealSense(DataSource):
         return self.rgb_calib
 
     def next(
-        self, inst: QuadricSlam
+        self, state: QuadricSlamState
     ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
         # TODO extract odom estimate for 435i
         odom = None

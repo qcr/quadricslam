@@ -2,7 +2,8 @@ from spatialmath import SE3
 from typing import Optional
 import numpy as np
 
-from quadricslam import QuadricSlam, VisualOdometry
+from ..quadricslam_states import QuadricSlamState
+from . import VisualOdometry
 
 try:
     import cv2
@@ -17,29 +18,30 @@ class RgbdCv2(VisualOdometry):
         self.odometry = None
         self.prev_gray = None
 
-    def odom(self, inst: QuadricSlam) -> Optional[SE3]:
+    def odom(self, state: QuadricSlamState) -> SE3:
+        n = state.this_step
+        p = state.prev_step
+        s = state.system
+
+        # Perform no corrections if we're missing images or RGB calibration
+        if (s.calib_rgb is None or n is None or p is None or n.rgb is None or
+                p.rgb is None or n.depth is None or p.depth is None):
+            return VisualOdometry.safe_odom(None,
+                                            None if n is None else n.odom)
+
         # Initialise the odometry estimator if required
         if self.odometry is None:
             i = np.eye(3)
-            c = inst.data_source.calib_rgb()
-            i[0, 0] = c[0]
-            i[1, 1] = c[1]
-            i[0, 2] = c[3]
-            i[1, 2] = c[4]
+            i[0, 0] = s.calib_rgb[0]
+            i[1, 1] = s.calib_rgb[1]
+            i[0, 2] = s.calib_rgb[3]
+            i[1, 2] = s.calib_rgb[4]
             self.odometry = cv2.rgbd.RgbdOdometry_create(i)
-
-        # Bail early if we're missing images
-        if (inst.state_now is None or inst.state_now.rgb is None or
-                inst.state_now.depth is None or inst.state_prev is None or
-                self.prev_gray is None or inst.state_prev.depth is None):
-            return (SE3() if inst.state_now is None or
-                    inst.state_now.odom is None else inst.state_now.odom)
 
         # Compute an odometry estimate using grayscale version of the RGB image
         t = np.eye(4)
-        mask = np.ones(inst.state_now.rgb.shape, np.uint8)
-        self.odometry.compute(
-            self.prev_gray, inst.state_prev.depth, mask,
-            cv2.cvtColor(inst.state_now.rgb, cv2.COLOR_RGB2GRAY),
-            inst.state_now.depth, mask, t)
+        mask = np.ones(n.rgb.shape, np.uint8)
+        self.odometry.compute(self.prev_gray, p.depth, mask,
+                              cv2.cvtColor(n.rgb, cv2.COLOR_RGB2GRAY), n.depth,
+                              mask, t)
         return SE3(t)

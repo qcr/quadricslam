@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 import gtsam
 import numpy as np
 
-from quadricslam import QuadricSlam
+from ..quadricslam_states import QuadricSlamState
 
 
 class DataSource(ABC):
@@ -27,7 +27,7 @@ class DataSource(ABC):
 
     @abstractmethod
     def next(
-        self, inst: QuadricSlam
+        self, state: QuadricSlamState
     ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
         pass
 
