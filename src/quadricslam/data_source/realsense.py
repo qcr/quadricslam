@@ -45,6 +45,9 @@ class RealSense(DataSource):
             profile.get_device().first_depth_sensor().get_depth_scale())
         return self
 
+    def __exit__(self):
+        self.pipeline.stop()
+
     def calib_depth(self) -> float:
         if self.depth_calib is None:
             raise RuntimeError("No depth calib found. Is camera running?")

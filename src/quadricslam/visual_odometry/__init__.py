@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
+from spatialmath import SE3
 from typing import Optional
 import numpy as np
-import spatialmath as sp
 
 
 class VisualOdometry(ABC):
@@ -11,5 +11,5 @@ class VisualOdometry(ABC):
 
     @abstractmethod
     def odom(self, rgb: np.ndarray, depth: Optional[np.ndarray],
-             odom_raw: Optional[sp.SE3]) -> sp.SE3:
+             odom_raw: Optional[SE3], rgb_calib: np.ndarray) -> Optional[SE3]:
         pass

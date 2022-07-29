@@ -171,9 +171,11 @@ class QuadricSlam:
 
         # Get latest data from the scene (odom, images, and detections)
         odom, rgb, depth = self.data_source.next()
-        if self.visual_odometry:
-            odom = self.visual_odometry.odom(rgb, depth, odom)
-        detections = self.detector.detect(rgb,
+        if self.visual_odometry and rgb is not None:
+            o = self.visual_odometry.odom(rgb, depth, odom,
+                                          self.data_source.calib_rgb())
+            o = odom if o is None else o
+        detections = self.detector.detect(rgb, self.data_source.calib_rgb(),
                                           pose_key) if self.detector else []
         new_associated, self.associated, self.unassociated = (
             self.associator.associate(detections, self.associated,
