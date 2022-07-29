@@ -161,7 +161,7 @@ class QuadricSlam:
     def step(self) -> None:
         # Setup state for the current step
         s = self.state.system
-        p = self.state_prev
+        p = self.state.prev_step
         n = StepState(
             0 if self.state.prev_step is None else self.state.prev_step.i + 1)
         self.state.this_step = n
@@ -201,10 +201,10 @@ class QuadricSlam:
             s.graph.add(
                 gtsam_quadrics.BoundingBoxFactor(
                     gtsam_quadrics.AlignedBox2(d.bounds),
-                    gtsam.Cal3_S2(self.detector.calib()), d.pose_key,
-                    d.quadric_key, s.noise_boxes))
+                    gtsam.Cal3_S2(s.calib_rgb), d.pose_key, d.quadric_key,
+                    s.noise_boxes))
 
-        self.state_prev = n
+        self.state.prev_step = n
 
     def reset(self) -> None:
         self.data_source.restart()

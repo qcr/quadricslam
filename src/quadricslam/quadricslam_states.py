@@ -35,8 +35,8 @@ class StepState:
         self.depth: Optional[np.ndarray] = None
         self.odom: Optional[SE3] = None
 
-        self.detections: Optional[List[Detection]] = None
-        self.new_associated: Optional[List[Detection]] = None
+        self.detections: List[Detection] = []
+        self.new_associated: List[Detection] = []
 
 
 class SystemState:
