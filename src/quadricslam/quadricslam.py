@@ -48,6 +48,20 @@ def xi(i: int) -> int:
     return int(gtsam.symbol('x', i))
 
 
+class QuadricSlamStepState:
+
+    def __init__(self, i: int) -> None:
+        self.i = i
+        self.pose_key = xi(i)
+
+        self.rgb: Optional[np.ndarray] = None
+        self.depth: Optional[np.ndarray] = None
+        self.odom: Optional[SE3] = None
+
+        self.detections: Optional[List[Detection]] = None
+        self.new_associated: Optional[List[Detection]] = None
+
+
 class QuadricSlam:
 
     def __init__(
@@ -167,19 +181,19 @@ class QuadricSlam:
             self.on_new_estimate(self.estimates, self.labels, True)
 
     def step(self) -> None:
-        pose_key = xi(self.i)
+        # Setup state for the current step
+        self.state_now = QuadricSlamStepState(
+            0 if self.state_prev is None else self.state_prev.i + 1)
 
         # Get latest data from the scene (odom, images, and detections)
-        odom, rgb, depth = self.data_source.next()
-        if self.visual_odometry and rgb is not None:
-            o = self.visual_odometry.odom(rgb, depth, odom,
-                                          self.data_source.calib_rgb())
-            o = odom if o is None else o
-        detections = self.detector.detect(rgb, self.data_source.calib_rgb(),
-                                          pose_key) if self.detector else []
-        new_associated, self.associated, self.unassociated = (
-            self.associator.associate(detections, self.associated,
-                                      self.unassociated))
+        self.state_now.odom, self.state_now.rgb, self.state_now.depth = (
+            self.data_source.next(self))
+        if self.visual_odometry is not None:
+            self.state_now.odom = self.visual_odometry.odom(self)
+        self.state_now.detections = (self.detector.detect(self)
+                                     if self.detector else [])
+        self.state_now.new_associated, self.associated, self.unassociated = (
+            self.associator.associate(self))
 
         # Extract some labels
         # TODO handle cases where different labels used for a single quadric???
@@ -190,28 +204,28 @@ class QuadricSlam:
         }
 
         # # Add new pose to the factor graph
-        if self.i == 0 or self.prev_odom == None:
+        if self.state_prev is None:
             self.graph.add(
-                gtsam.PriorFactorPose3(pose_key, self.initial_pose,
-                                       self.noise_prior))
+                gtsam.PriorFactorPose3(self.state_now.pose_key,
+                                       self.initial_pose, self.noise_prior))
         else:
             self.graph.add(
                 gtsam.BetweenFactorPose3(
-                    xi(self.i - 1), pose_key,
-                    gtsam.Pose3(
-                        (self.prev_odom.inv() * odom if odom else SE3()).A),
-                    self.noise_odom))
+                    self.state_prev.pose_key, self.state_now.pose_key,
+                    gtsam.Pose3(((SE3() if self.state_prev.odom is None else
+                                  self.state_prev.odom).inv() *
+                                 (SE3() if self.state_now.odom is None else
+                                  self.state_now.odom)).A), self.noise_odom))
 
         # Add any newly associated detections to the factor graph
-        for d in new_associated:
+        for d in self.state_now.new_associated:
             self.graph.add(
                 gtsam_quadrics.BoundingBoxFactor(
                     gtsam_quadrics.AlignedBox2(d.bounds),
                     gtsam.Cal3_S2(self.detector.calib()), d.pose_key,
                     d.quadric_key, self.noise_boxes))
 
-        self.i += 1
-        self.prev_odom = SE3() if odom is None else odom
+        self.state_prev = self.state_now
 
     def reset(self) -> None:
         self.data_source.restart()
@@ -227,5 +241,5 @@ class QuadricSlam:
         self.optimiser = (None if self.optimiser_batch else
                           self.optimiser_type(self.optimiser_params))
 
-        self.i = 0
-        self.prev_odom = None
+        self.state_prev: Optional[QuadricSlamStepState] = None
+        self.state_now: Optional[QuadricSlamStepState] = None

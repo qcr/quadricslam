@@ -3,6 +3,8 @@ from spatialmath import SE3
 from typing import Optional
 import numpy as np
 
+from quadricslam import QuadricSlam
+
 
 class VisualOdometry(ABC):
 
@@ -10,6 +12,5 @@ class VisualOdometry(ABC):
         pass
 
     @abstractmethod
-    def odom(self, rgb: np.ndarray, depth: Optional[np.ndarray],
-             odom_raw: Optional[SE3], rgb_calib: np.ndarray) -> Optional[SE3]:
+    def odom(self, inst: QuadricSlam) -> SE3:
         pass

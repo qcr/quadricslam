@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 import numpy as np
 
+from quadricslam import QuadricSlam
+
 
 class Detection:
 
@@ -22,6 +24,5 @@ class Detector(ABC):
         pass
 
     @abstractmethod
-    def detect(self, rgb: Optional[np.ndarray], rgb_calib: np.ndarray,
-               pose_key: int) -> List[Detection]:
+    def detect(self, inst: QuadricSlam) -> List[Detection]:
         pass

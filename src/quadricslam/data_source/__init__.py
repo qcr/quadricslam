@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from spatialmath import SE3
 from typing import Optional, Tuple
+import gtsam
 import numpy as np
 
-import gtsam
+from quadricslam import QuadricSlam
 
 
 class DataSource(ABC):
@@ -26,7 +27,7 @@ class DataSource(ABC):
 
     @abstractmethod
     def next(
-        self
+        self, inst: QuadricSlam
     ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
         pass
 

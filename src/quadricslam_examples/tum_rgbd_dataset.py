@@ -83,7 +83,8 @@ class TumRgbd(DataSource):
         return self.data_i == self.data_length
 
     def next(
-            self) -> Tuple[Optional[sm.SE3], np.ndarray, Optional[np.ndarray]]:
+        self, inst: QuadricSlam
+    ) -> Tuple[Optional[sm.SE3], np.ndarray, Optional[np.ndarray]]:
         i = self.data_i
         self.data_i += 1
         return (sm.SE3() if i == 0 else self._gt_to_SE3(i) *
