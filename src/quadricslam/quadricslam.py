@@ -10,35 +10,10 @@ from .data_associator import DataAssociator
 from .data_source import DataSource
 from .detector import Detector
 from .quadricslam_states import QuadricSlamState, StepState, SystemState
+from .utils import QuadricInitialiser, initialise_quadric_ray_intersection
 from .visual_odometry import VisualOdometry
 
 import pudb
-
-
-def guess_quadric(
-        obs_poses: List[gtsam.Pose3], boxes: List[gtsam_quadrics.AlignedBox2],
-        calib: gtsam.Cal3_S2) -> gtsam_quadrics.ConstrainedDualQuadric:
-    # TODO replace with something less dumb...
-
-    # Get each observation point
-    ps = np.array([op.translation() for op in obs_poses])
-
-    # Get each observation direction
-    # TODO actually use bounding box rather than assuming middle...
-    vs = np.array([op.rotation().matrix()[:, 0] for op in obs_poses])
-
-    # Apply this to compute point closet to where all rays converge:
-    #   https://stackoverflow.com/a/52089698/1386784
-    i_minus_vs = np.eye(3) - (vs[:, :, np.newaxis] @ vs[:, np.newaxis, :])
-    quadric_centroid = np.linalg.lstsq(
-        i_minus_vs.sum(axis=0),
-        (i_minus_vs @ ps[:, :, np.newaxis]).sum(axis=0),
-        rcond=None)[0].squeeze()
-
-    # Fudge the rest for now
-    # TODO do better...
-    return gtsam_quadrics.ConstrainedDualQuadric(
-        gtsam.Rot3(), gtsam.Point3(quadric_centroid), [1, 1, 0.1])
 
 
 class QuadricSlam:
@@ -57,7 +32,9 @@ class QuadricSlam:
         optimiser_params: Optional[Union[gtsam.ISAM2Params,
                                          gtsam.LevenbergMarquardtParams,
                                          gtsam.GaussNewtonParams]] = None,
-        on_new_estimate: Optional[Callable[[QuadricSlamState], None]] = None
+        on_new_estimate: Optional[Callable[[QuadricSlamState], None]] = None,
+        quadric_initialiser:
+        QuadricInitialiser = initialise_quadric_ray_intersection
     ) -> None:
         # TODO this needs a default data associator, we can't do anything
         # meaningful if this is None...
@@ -70,6 +47,7 @@ class QuadricSlam:
         self.visual_odometry = visual_odometry
 
         self.on_new_estimate = on_new_estimate
+        self.quadric_initialiser = quadric_initialiser
 
         # Bail if optimiser settings and modes aren't compatible
         if (optimiser_batch == True and
@@ -138,11 +116,11 @@ class QuadricSlam:
         ],
                      key=_ok)
         for qbbs in [list(v) for k, v in groupby(bbs, _ok)]:
-            guess_quadric([s.estimates.atPose3(bb.poseKey()) for bb in qbbs],
-                          [bb.measurement for bb in qbbs],
-                          gtsam.Cal3_S2(
-                              self.data_source.calib_rgb())).addToValues(
-                                  s.estimates, qbbs[0].objectKey())
+            self.quadric_initialiser(
+                [s.estimates.atPose3(bb.poseKey()) for bb in qbbs],
+                [bb.measurement for bb in qbbs],
+                gtsam.Cal3_S2(self.data_source.calib_rgb())).addToValues(
+                    s.estimates, qbbs[0].objectKey())
 
     def spin(self) -> None:
         while not self.data_source.done():
