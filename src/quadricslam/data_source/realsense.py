@@ -59,6 +59,9 @@ class RealSense(DataSource):
             raise RuntimeError("No RGB calib found. Is camera running?")
         return self.rgb_calib
 
+    def done(self) -> bool:
+        return False
+
     def next(
         self, state: QuadricSlamState
     ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
@@ -75,3 +78,6 @@ class RealSense(DataSource):
         depth = np.array(self.calib_depth() * np.asanyarray(depth.get_data()),
                          dtype=np.float32)
         return odom, color, depth
+
+    def restart(self) -> None:
+        pass
