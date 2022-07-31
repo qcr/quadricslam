@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
+import inspect
 import numpy as np
+import os
 import spatialmath as sm
 import sys
+import textwrap
 
 from quadricslam import QuadricSlam, visualise
 from quadricslam.data_source.tum_rgbd import TumRgbd
@@ -11,9 +14,21 @@ from quadricslam.detector.faster_rcnn import FasterRcnn
 import pudb
 
 if __name__ == '__main__':
+    # Print a verbose note each time this is run about getting the dataset
+    print(
+        "%s\n\nThe script can be run via:\n\t%s DESTINATION\n" %
+        (textwrap.fill(
+            "NOTE: This example requires the path to an already downloaded TUM "
+            "RGBD dataset to be provided as the first argument. If you don't "
+            "have the datasets downloaded, we have a helper script with the "
+            "data source to get the datasets for you.",
+            width=80),
+         os.path.join(os.path.dirname(inspect.getfile(TumRgbd)),
+                      'get_tum_rgbd_datasets')))
+
     # Confirm dataset path is provided
     if len(sys.argv) != 2:
-        print("Path to dataset is a required argument.")
+        print("ERROR: Path to dataset is a required argument.")
         sys.exit(1)
     dataset_path = sys.argv[1]
 
