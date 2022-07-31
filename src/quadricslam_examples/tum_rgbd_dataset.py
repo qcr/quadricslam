@@ -3,19 +3,14 @@
 from subprocess import check_output
 from typing import List, Optional, Tuple, Union, cast
 import cv2
+import gtsam
 import numpy as np
 import os
 import spatialmath as sm
 import sys
 
-from detectron2 import config as d2c
-from detectron2 import data as d2d
-from detectron2 import engine as d2e
-from detectron2 import model_zoo as d2mz
-from detectron2.utils import visualizer as d2v
-import gtsam
-
-from quadricslam import DataSource, Detection, Detector, QuadricSlam, visualise
+from quadricslam import DataSource, QuadricSlam, visualise
+from quadricslam.detector.faster_rcnn import FasterRcnn
 
 import pudb
 
@@ -95,32 +90,6 @@ class TumRgbd(DataSource):
 
     def restart(self) -> None:
         self.data_i = 0
-
-
-class FasterRcnn(Detector):
-
-    def __init__(
-            self,
-            zoo_model: str = 'COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml',
-            detection_thresh: float = 0.5) -> None:
-        c = d2c.get_cfg()
-        c.merge_from_file(d2mz.get_config_file(zoo_model))
-        c.MODEL.ROI_HEADS.SCORE_THRESH_TEST = detection_thresh
-        c.MODEL.WEIGHTS = d2mz.get_checkpoint_url(zoo_model)
-        self.predictor = d2e.DefaultPredictor(c)
-        self.classes = d2d.MetadataCatalog.get(
-            self.predictor.cfg.DATASETS.TRAIN[0]).thing_classes
-
-    def detect(self, rgb: Optional[np.ndarray],
-               pose_key: int) -> List[Detection]:
-        inst = self.predictor(rgb)['instances']
-        pred_classes = inst.get('pred_classes').detach().cpu().numpy()
-        pred_boxes = inst.get('pred_boxes').tensor.detach().cpu().numpy()
-        return [
-            Detection(label=self.classes[pred_classes[i]],
-                      bounds=pred_boxes[i],
-                      pose_key=pose_key) for i in range(0, len(pred_classes))
-        ]
 
 
 if __name__ == '__main__':
