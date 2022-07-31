@@ -26,8 +26,9 @@ class RgbdCv2(VisualOdometry):
         # Perform no corrections if we're missing images or RGB calibration
         if (s.calib_rgb is None or n is None or p is None or n.rgb is None or
                 p.rgb is None or n.depth is None or p.depth is None):
-            return VisualOdometry.safe_odom(None,
-                                            None if n is None else n.odom)
+            return VisualOdometry.safe_odom(
+                None, None if n is None else n.odom,
+                SE3() if p is None or p.odom is None else p.odom)
 
         # Initialise the odometry estimator if required
         if self.odometry is None:
