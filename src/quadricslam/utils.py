@@ -1,12 +1,61 @@
 from typing import Callable, List
 import gtsam
 import gtsam_quadrics
+import numpy as np
 
 from .quadricslam_states import QuadricSlamState
 
 QuadricInitialiser = Callable[
     [List[gtsam.Pose3], List[gtsam_quadrics.AlignedBox2], QuadricSlamState],
     gtsam_quadrics.ConstrainedDualQuadric]
+
+
+# def initialize_quadric_from_depth(depth,
+#                                   box,
+#                                   camera_pose,
+#                                   calibration,
+#                                   object_depth=0.1):
+def initialise_quadric_from_depth(
+        obs_poses: List[gtsam.Pose3],
+        boxes: List[gtsam_quadrics.AlignedBox2],
+        state: QuadricSlamState,
+        object_depth=0.1) -> gtsam_quadrics.ConstrainedDualQuadric:
+    # Uses the depth image to initialise a quadric from a single view (note:
+    # this assumes there is only a single view, and will discard all extra
+    # views)
+    s = state.system
+    assert s.calib_rgb is not None
+    assert state.this_step is not None
+    n = state.this_step
+    assert n.depth is not None
+
+    box = boxes[0]
+    pose = obs_poses[0]
+    calib = gtsam.Cal3_S2(s.calib_rgb)
+
+    # get average box depth
+    dbox = box.vector().astype('int')  # get discrete box bounds
+    box_depth = n.depth[dbox[1]:dbox[3], dbox[0]:dbox[2]].mean()
+
+    # compute the 3D point corrosponding to the box center
+    center = box.center()
+    x = (center.x() - calib.px()) * box_depth / calib.fx()
+    y = (center.y() - calib.py()) * box_depth / calib.fy()
+    relative_point = gtsam.Point3(x, y, box_depth)
+    quadric_center = pose.transformFrom(relative_point)
+
+    # compute quadric rotation using .Lookat
+    up_vector = pose.transformFrom(gtsam.Point3(0, -1, 0))
+    quadric_rotation = gtsam.PinholeCameraCal3_S2.Lookat(
+        pose.translation(), quadric_center, up_vector).pose().rotation()
+    quadric_pose = gtsam.Pose3(quadric_rotation, quadric_center)
+
+    # compute the quadric radii from the box shape
+    tx = (box.xmin() - calib.px()) * box_depth / calib.fx()
+    ty = (box.ymin() - calib.py()) * box_depth / calib.fy()
+    radii = np.array([np.abs(tx - x), np.abs(ty - y), object_depth])
+
+    return gtsam_quadrics.ConstrainedDualQuadric(quadric_pose, radii)
 
 
 def initialise_quadric_ray_intersection(
