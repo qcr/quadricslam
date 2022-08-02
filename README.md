@@ -1,3 +1,5 @@
+<p align=center><strong>~Please note this is only a very early <em>beta</em> release at this stage~</strong></p>
+
 # QuadricSLAM
 
 [![QUT Centre for Robotics Open Source](https://github.com/qcr/qcr.github.io/raw/master/misc/badge.svg)](https://qcr.github.io)
