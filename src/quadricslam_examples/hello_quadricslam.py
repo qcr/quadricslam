@@ -95,7 +95,7 @@ class DummyDetector(Detector):
         ]
 
 
-if __name__ == '__main__':
+def run():
     q = QuadricSlam(
         data_source=DummyData(),
         detector=DummyDetector(),
@@ -105,3 +105,7 @@ if __name__ == '__main__':
             lambda state: visualise(state.system.estimates, state.system.
                                     labels, state.system.optimiser_batch)))
     q.spin()
+
+
+if __name__ == '__main__':
+    run()

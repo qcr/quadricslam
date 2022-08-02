@@ -13,7 +13,8 @@ from quadricslam.detector.faster_rcnn import FasterRcnn
 
 import pudb
 
-if __name__ == '__main__':
+
+def run():
     # Print a verbose note each time this is run about getting the dataset
     print(
         "%s\n\nThe script can be run via:\n\t%s DESTINATION\n" %
@@ -48,3 +49,7 @@ if __name__ == '__main__':
         on_new_estimate=(
             lambda vals, labels, done: visualise(vals, labels, done)))
     q.spin()
+
+
+if __name__ == '__main__':
+    run()
