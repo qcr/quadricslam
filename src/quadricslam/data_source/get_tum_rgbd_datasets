@@ -19,6 +19,7 @@ if [ -z "${1:-}" ]; then
   printf "${WARN}No target directory provided, falling back to default${NC}\n"
 fi
 dp="$(realpath ${1:-$DEFAULT_PATH})"
+if [ ! -f "$dp" ]; then mkdir -p "$dp"; fi
 
 printf "${INFO}Downloading TUM RGBD datasets to '${dp}':${NC}\n"
 for i in "${!DATASETS[@]}"; do
