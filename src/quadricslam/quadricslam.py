@@ -61,7 +61,7 @@ class QuadricSlam:
                 type(optimiser_params))
         if optimiser_params is None:
             optimiser_params = (gtsam.LevenbergMarquardtParams()
-                                if optimiser_batch is not False else
+                                if optimiser_batch is True else
                                 gtsam.ISAM2Params())
 
         # Setup the system state, and perform a reset
@@ -71,7 +71,7 @@ class QuadricSlam:
                 noise_prior=noise_prior,
                 noise_odom=noise_odom,
                 noise_boxes=noise_boxes,
-                optimiser_batch=type(optimiser_params) != gtsam.ISAM2,
+                optimiser_batch=type(optimiser_params) != gtsam.ISAM2Params,
                 optimiser_params=optimiser_params))
         self.reset()
 
@@ -132,9 +132,8 @@ class QuadricSlam:
             s.optimiser = s.optimiser_type(s.graph, s.estimates,
                                            s.optimiser_params)
             s.estimates = s.optimiser.optimize()
-
-        if self.on_new_estimate:
-            self.on_new_estimate(self.state)
+            if self.on_new_estimate:
+                self.on_new_estimate(self.state)
 
     def step(self) -> None:
         # Setup state for the current step
@@ -181,6 +180,16 @@ class QuadricSlam:
                     gtsam_quadrics.AlignedBox2(d.bounds),
                     gtsam.Cal3_S2(s.calib_rgb), d.pose_key, d.quadric_key,
                     s.noise_boxes))
+
+        # Optimise if we're in iterative mode
+        if not s.optimiser_batch:
+            self.guess_initial_values()
+            if s.optimiser is None:
+                s.optimiser = s.optimiser_type(s.optimiser_params)
+            s.optimiser.update(s.graph, s.estimates)
+            s.estimates = s.optimiser.calculateEstimate()
+            if self.on_new_estimate:
+                self.on_new_estimate(self.state)
 
         self.state.prev_step = n
 

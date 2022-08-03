@@ -48,5 +48,4 @@ class RgbdCv2(VisualOdometry):
                               mask, t)
         self.prev_odom = (SE3() if self.prev_odom is None else self.prev_odom *
                           SE3(t))
-        print(self.prev_odom)
         return self.prev_odom

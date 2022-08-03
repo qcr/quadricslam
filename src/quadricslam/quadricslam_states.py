@@ -60,7 +60,7 @@ class SystemState:
         self.optimiser_batch = optimiser_batch
         self.optimiser_params = optimiser_params
         self.optimiser_type = (
-            gtsam.ISAM2 if type(optimiser_params) == gtsam.ISAM2 else
+            gtsam.ISAM2 if type(optimiser_params) == gtsam.ISAM2Params else
             gtsam.GaussNewtonOptimizer if type(optimiser_params)
             == gtsam.GaussNewtonParams else gtsam.LevenbergMarquardtOptimizer)
 
