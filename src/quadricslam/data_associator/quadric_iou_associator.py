@@ -10,7 +10,7 @@ from . import DataAssociator
 # Basic associator that makes associations by checking the 2D bounding box IOU
 # of projections of an existing map of quadrics into the current RGB frame.
 # Realistically, will have best chance of working when using an iterative
-# optimiser (because the map where associating against will be best quality)
+# optimiser (because the map we're associating against will be best quality)
 
 # NOTE: this method never leaves any detections unassociated between iterations
 

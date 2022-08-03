@@ -8,11 +8,13 @@ from quadricslam.visual_odometry.rgbd_cv2 import RgbdCv2
 
 
 def run():
-    q = QuadricSlam(data_source=RealSense(),
-                    visual_odometry=RgbdCv2(),
-                    associator=QuadricIouAssociator(),
-                    quadric_initialiser=utils.initialise_quadric_from_depth)
-    q.spin()
+    with RealSense() as rs:
+        q = QuadricSlam(
+            data_source=rs,
+            visual_odometry=RgbdCv2(),
+            associator=QuadricIouAssociator(),
+            quadric_initialiser=utils.initialise_quadric_from_depth)
+        q.spin()
 
 
 if __name__ == '__main__':

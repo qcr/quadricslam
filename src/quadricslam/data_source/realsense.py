@@ -1,5 +1,6 @@
+from types import TracebackType
 from spatialmath import SE3
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Type
 import numpy as np
 
 from ..quadricslam_states import QuadricSlamState
@@ -46,8 +47,11 @@ class RealSense(DataSource):
             profile.get_device().first_depth_sensor().get_depth_scale())
         return self
 
-    def __exit__(self):
+    def __exit__(self, exctype: Optional[Type[BaseException]],
+                 excinst: Optional[BaseException],
+                 exctb: Optional[TracebackType]) -> bool:
         self.pipeline.stop()
+        return True
 
     def calib_depth(self) -> float:
         if self.depth_calib is None:
