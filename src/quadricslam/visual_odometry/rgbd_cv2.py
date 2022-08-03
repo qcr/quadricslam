@@ -16,7 +16,7 @@ class RgbdCv2(VisualOdometry):
 
     def __init__(self) -> None:
         self.odometry = None
-        self.prev_gray = None
+        self.prev_odom = None
 
     def odom(self, state: QuadricSlamState) -> SE3:
         n = state.this_step
@@ -41,8 +41,12 @@ class RgbdCv2(VisualOdometry):
 
         # Compute an odometry estimate using grayscale version of the RGB image
         t = np.eye(4)
-        mask = np.ones(n.rgb.shape, np.uint8)
-        self.odometry.compute(self.prev_gray, p.depth, mask,
+        mask = np.ones(n.rgb.shape[:-1], np.uint8)
+        self.odometry.compute(cv2.cvtColor(p.rgb,
+                                           cv2.COLOR_RGB2GRAY), p.depth, mask,
                               cv2.cvtColor(n.rgb, cv2.COLOR_RGB2GRAY), n.depth,
                               mask, t)
-        return SE3(t)
+        self.prev_odom = (SE3() if self.prev_odom is None else self.prev_odom *
+                          SE3(t))
+        print(self.prev_odom)
+        return self.prev_odom

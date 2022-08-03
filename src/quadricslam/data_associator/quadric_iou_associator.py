@@ -30,8 +30,8 @@ class QuadricIouAssociator(DataAssociator):
         s = state.system
         n = state.this_step
         ps, qs = ps_and_qs_from_values(state.system.estimates)
-        next_q = (max([int(gtsam.Symbol(k).string()[1:]) for k in qs.keys()]) +
-                  1)
+        next_q = (0 if len(qs.values()) == 0 else (
+            max([int(gtsam.Symbol(k).string()[1:]) for k in qs.keys()]) + 1))
 
         # Bail early if there's no quadrics yet to match against (each box is
         # treated as a new quadric)

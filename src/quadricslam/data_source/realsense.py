@@ -49,9 +49,9 @@ class RealSense(DataSource):
 
     def __exit__(self, exctype: Optional[Type[BaseException]],
                  excinst: Optional[BaseException],
-                 exctb: Optional[TracebackType]) -> bool:
+                 exctb: Optional[TracebackType]) -> Optional[bool]:
         self.pipeline.stop()
-        return True
+        return False
 
     def calib_depth(self) -> float:
         if self.depth_calib is None:
