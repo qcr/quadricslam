@@ -99,6 +99,22 @@ def new_factors(current: gtsam.NonlinearFactorGraph,
     return g
 
 
+def new_values(current: gtsam.Values, previous: gtsam.Values):
+    # Figure out new values
+    cps, cqs = ps_and_qs_from_values(current)
+    pps, pqs = ps_and_qs_from_values(previous)
+    vs = {
+        **{k: cps[k] for k in list(set(cps.keys()) - set(pps.keys()))},
+        **{k: cps[k] for k in list(set(cps.keys()) - set(pps.keys()))}
+    }
+
+    # Return NEW values with each of our estimates
+    vs = gtsam.Values()
+    for k, v in vs.items():
+        vs.insert(k, v)
+    return vs
+
+
 def ps_and_qs_from_values(values: gtsam.Values):
     # TODO there's got to be a better way to access the typed values...
     return ({
