@@ -86,6 +86,19 @@ def initialise_quadric_ray_intersection(
         gtsam.Rot3(), gtsam.Point3(quadric_centroid), [1, 1, 0.1])
 
 
+def new_factors(current: gtsam.NonlinearFactorGraph,
+                previous: gtsam.NonlinearFactorGraph):
+    # Figure out the new factors
+    fs = (set([current.at(i) for i in range(0, current.size())]) -
+          set([previous.at(i) for i in range(0, previous.size())]))
+
+    # Return a NEW graph with the factors
+    g = gtsam.NonlinearFactorGraph()
+    for f in fs:
+        g.add(f)
+    return g
+
+
 def ps_and_qs_from_values(values: gtsam.Values):
     # TODO there's got to be a better way to access the typed values...
     return ({
