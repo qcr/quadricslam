@@ -1,19 +1,24 @@
 from itertools import groupby
 from types import FunctionType
-from spatialmath import SE3
 from typing import Callable, Dict, List, Optional, Union
+
 import gtsam
 import gtsam_quadrics
 import numpy as np
+import pudb
+from spatialmath import SE3
 
 from .data_associator import DataAssociator
 from .data_source import DataSource
 from .detector import Detector
 from .quadricslam_states import QuadricSlamState, StepState, SystemState
-from .utils import QuadricInitialiser, initialise_quadric_ray_intersection
+from .utils import (
+    QuadricInitialiser,
+    initialise_quadric_ray_intersection,
+    new_factors,
+    new_values,
+)
 from .visual_odometry import VisualOdometry
-
-import pudb
 
 
 class QuadricSlam:
@@ -186,7 +191,9 @@ class QuadricSlam:
             self.guess_initial_values()
             if s.optimiser is None:
                 s.optimiser = s.optimiser_type(s.optimiser_params)
-            s.optimiser.update(s.graph, s.estimates)
+            s.optimiser.update(
+                new_factors(s.graph, s.optimiser.getFactorsUnsafe()),
+                new_values(s.estimates, s.optimiser.getLinearizationPoint()))
             s.estimates = s.optimiser.calculateEstimate()
             if self.on_new_estimate:
                 self.on_new_estimate(self.state)

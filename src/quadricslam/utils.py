@@ -93,10 +93,10 @@ def new_factors(current: gtsam.NonlinearFactorGraph,
           set([previous.at(i) for i in range(0, previous.size())]))
 
     # Return a NEW graph with the factors
-    g = gtsam.NonlinearFactorGraph()
+    out = gtsam.NonlinearFactorGraph()
     for f in fs:
-        g.add(f)
-    return g
+        out.add(f)
+    return out
 
 
 def new_values(current: gtsam.Values, previous: gtsam.Values):
@@ -109,10 +109,10 @@ def new_values(current: gtsam.Values, previous: gtsam.Values):
     }
 
     # Return NEW values with each of our estimates
-    vs = gtsam.Values()
+    out = gtsam.Values()
     for k, v in vs.items():
-        vs.insert(k, v)
-    return vs
+        out.insert(k, v)
+    return out
 
 
 def ps_and_qs_from_values(values: gtsam.Values):
