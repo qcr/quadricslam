@@ -101,6 +101,7 @@ def run():
         detector=DummyDetector(),
         associator=DummyAssociator(),
         initial_pose=SE3(POSES[0].matrix()),
+        optimiser_batch=True,
         on_new_estimate=(
             lambda state: visualise(state.system.estimates, state.system.
                                     labels, state.system.optimiser_batch)))
