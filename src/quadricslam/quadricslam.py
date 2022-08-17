@@ -110,7 +110,12 @@ class QuadricSlam:
                 bf.keys()[1],
                 s.estimates.atPose3(bf.keys()[0]) * bf.measured())
             bfs.remove(bf)
-        for bf in bfs:
+        for bf in [
+                f for f in bfs if not all([
+                    s.estimates.exists(f.keys()[i])
+                    for i in range(0, len(f.keys()))
+                ])
+        ]:
             s.estimates.insert(bf.keys()[1], gtsam.Pose3())
 
         # Add all quadric factors
