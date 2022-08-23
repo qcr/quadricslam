@@ -3,7 +3,7 @@ from typing import List, Tuple
 import gtsam_quadrics
 import numpy as np
 
-from ..quadricslam_states import Detection, QuadricSlamState, qi
+from ..quadricslam_states import Detection, QuadricSlamState, qi as QI
 from ..utils import ps_and_qs_from_values
 from . import DataAssociator
 
@@ -37,7 +37,7 @@ class QuadricIouAssociator(DataAssociator):
         # treated as a new quadric)
         if len(qs.values()) == 0:
             for i, d in enumerate(n.detections):
-                d.quadric_key = qi(next_q + i)
+                d.quadric_key = QI(next_q + i)
             return (n.detections, n.detections + s.associated, [])
 
         # Compute IOU matrix for each unassociated detection
