@@ -128,9 +128,8 @@ class QuadricSlam:
         for qbbs in [list(v) for k, v in groupby(bbs, _ok)]:
             self.quadric_initialiser(
                 [s.estimates.atPose3(bb.poseKey()) for bb in qbbs],
-                [bb.measurement for bb in qbbs],
-                gtsam.Cal3_S2(self.data_source.calib_rgb())).addToValues(
-                    s.estimates, qbbs[0].objectKey())
+                [bb.measurement() for bb in qbbs],
+                self.state)
 
     def spin(self) -> None:
         while not self.data_source.done():

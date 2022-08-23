@@ -10,11 +10,6 @@ QuadricInitialiser = Callable[
     gtsam_quadrics.ConstrainedDualQuadric]
 
 
-# def initialize_quadric_from_depth(depth,
-#                                   box,
-#                                   camera_pose,
-#                                   calibration,
-#                                   object_depth=0.1):
 def initialise_quadric_from_depth(
         obs_poses: List[gtsam.Pose3],
         boxes: List[gtsam_quadrics.AlignedBox2],
@@ -39,15 +34,16 @@ def initialise_quadric_from_depth(
 
     # compute the 3D point corrosponding to the box center
     center = box.center()
-    x = (center.x() - calib.px()) * box_depth / calib.fx()
-    y = (center.y() - calib.py()) * box_depth / calib.fy()
+    x = (center[0] - calib.px()) * box_depth / calib.fx()
+    y = (center[1] - calib.py()) * box_depth / calib.fy()
     relative_point = gtsam.Point3(x, y, box_depth)
     quadric_center = pose.transformFrom(relative_point)
 
     # compute quadric rotation using .Lookat
     up_vector = pose.transformFrom(gtsam.Point3(0, -1, 0))
     quadric_rotation = gtsam.PinholeCameraCal3_S2.Lookat(
-        pose.translation(), quadric_center, up_vector).pose().rotation()
+        pose.translation(), quadric_center, up_vector,
+        calib).pose().rotation()
     quadric_pose = gtsam.Pose3(quadric_rotation, quadric_center)
 
     # compute the quadric radii from the box shape
@@ -105,7 +101,7 @@ def new_values(current: gtsam.Values, previous: gtsam.Values):
     pps, pqs = ps_and_qs_from_values(previous)
     vs = {
         **{k: cps[k] for k in list(set(cps.keys()) - set(pps.keys()))},
-        **{k: cps[k] for k in list(set(cps.keys()) - set(pps.keys()))}
+        **{k: cqs[k] for k in list(set(cqs.keys()) - set(pqs.keys()))}
     }
 
     # Return NEW values with each of our estimates
