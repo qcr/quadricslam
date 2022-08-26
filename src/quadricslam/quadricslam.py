@@ -195,12 +195,16 @@ class QuadricSlam:
             self.guess_initial_values()
             if s.optimiser is None:
                 s.optimiser = s.optimiser_type(s.optimiser_params)
-            s.optimiser.update(
-                new_factors(s.graph, s.optimiser.getFactorsUnsafe()),
-                new_values(s.estimates, s.optimiser.getLinearizationPoint()))
-            s.estimates = s.optimiser.calculateEstimate()
-            if self.on_new_estimate:
-                self.on_new_estimate(self.state)
+            try:
+                s.optimiser.update(
+                    new_factors(s.graph, s.optimiser.getFactorsUnsafe()),
+                    new_values(s.estimates, s.optimiser.getLinearizationPoint()))
+                s.estimates = s.optimiser.calculateEstimate()
+                if self.on_new_estimate:
+                    self.on_new_estimate(self.state)
+                print("Success")
+            except RuntimeError as e:
+                print("Ill-conditioned")
 
         self.state.prev_step = n
 
