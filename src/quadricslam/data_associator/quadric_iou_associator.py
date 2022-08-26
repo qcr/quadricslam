@@ -1,5 +1,6 @@
 from scipy.optimize import linear_sum_assignment
 from typing import List, Tuple
+import gtsam
 import gtsam_quadrics
 import numpy as np
 
@@ -48,7 +49,8 @@ class QuadricIouAssociator(DataAssociator):
                 # Note: smartBounds() can be used here for more accuracy?
                 ious[i, j] = b.iou(
                     gtsam_quadrics.QuadricCamera.project(
-                        q, n.odom, gtsam.Cal3_S2(s.calib_rgb)).bounds())
+                        q, gtsam.Pose3(n.odom),
+                        gtsam.Cal3_S2(s.calib_rgb)).bounds())
 
         # Solve as an optimal assignment problem
         dis, qis = linear_sum_assignment(-ious)
@@ -58,7 +60,7 @@ class QuadricIouAssociator(DataAssociator):
         i = 0
         for di, qi in zip(dis, qis):
             if ious[di, qi] < self.iou_thresh:
-                n.detections[di].quadric_key = qi(next_q + i)
+                n.detections[di].quadric_key = QI(next_q + i)
                 i += 1
             else:
                 n.detections[di].quadric_key = list(qs.keys())[qi]
