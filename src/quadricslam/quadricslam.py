@@ -129,7 +129,7 @@ class QuadricSlam:
             self.quadric_initialiser(
                 [s.estimates.atPose3(bb.poseKey()) for bb in qbbs],
                 [bb.measurement() for bb in qbbs],
-                self.state)
+                self.state).addToValues(s.estimates, qbbs[0].objectKey())
 
     def spin(self) -> None:
         while not self.data_source.done():
