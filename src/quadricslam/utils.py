@@ -107,7 +107,10 @@ def new_values(current: gtsam.Values, previous: gtsam.Values):
     # Return NEW values with each of our estimates
     out = gtsam.Values()
     for k, v in vs.items():
-        out.insert(k, v)
+        if type(v) == gtsam_quadrics.ConstrainedDualQuadric:
+            v.addToValues(out, k)
+        else:
+            out.insert(k, v)
     return out
 
 
