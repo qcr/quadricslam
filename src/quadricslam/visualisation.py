@@ -10,6 +10,19 @@ from .utils import ps_and_qs_from_values
 import pudb
 
 
+def _axis_limits(ps, qs):
+    xs = ([p.translation()[0] for p in ps] + [q.bounds().xmin() for q in qs] +
+          [q.bounds().xmax() for q in qs])
+    ys = ([p.translation()[1] for p in ps] + [q.bounds().ymin() for q in qs] +
+          [q.bounds().ymax() for q in qs])
+    return np.min(xs), np.max(xs), np.min(ys), np.max(ys)
+
+
+def _scale_factor(ps, qs):
+    lims = _axis_limits(ps, qs)
+    return np.max([lims[1] - lims[0], lims[3] - lims[2]])
+
+
 def _set_axes_equal(ax):
     # Matplotlib is really ordinary for 3D plots... here's a hack taken from
     # here to get 'square' in 3D:
@@ -51,24 +64,26 @@ def visualise(values: gtsam.Values,
 
     # Get latest pose & quadric estimates
     full_ps, full_qs = ps_and_qs_from_values(values)
+    sf = 0.1 * _scale_factor(full_ps.values(), full_qs.values())
     ps = [p.matrix() for p in full_ps.values()]
 
     pxs, pys, pzs, pxus, pxvs, pxws, pyus, pyvs, pyws, pzus, pzvs, pzws = (
-        [p[0, 3] for p in ps],
-        [p[1, 3] for p in ps],
-        [p[2, 3] for p in ps],
-        [p[0, 0] for p in ps],
-        [p[1, 0] for p in ps],
-        [p[2, 0] for p in ps],
-        [p[0, 1] for p in ps],
-        [p[1, 1] for p in ps],
-        [p[2, 1] for p in ps],
-        [p[0, 2] for p in ps],
-        [p[1, 2] for p in ps],
-        [p[2, 2] for p in ps],
+        np.array([p[0, 3] for p in ps]),
+        np.array([p[1, 3] for p in ps]),
+        np.array([p[2, 3] for p in ps]),
+        np.array([p[0, 0] for p in ps]),
+        np.array([p[1, 0] for p in ps]),
+        np.array([p[2, 0] for p in ps]),
+        np.array([p[0, 1] for p in ps]),
+        np.array([p[1, 1] for p in ps]),
+        np.array([p[2, 1] for p in ps]),
+        np.array([p[0, 2] for p in ps]),
+        np.array([p[1, 2] for p in ps]),
+        np.array([p[2, 2] for p in ps]),
     )
 
     ax = plt.gca(projection='3d')
+    ax.clear()
     alphas = np.linspace(0.2, 1, len(ps))
     for i in range(1, len(ps)):
         plt.plot(pxs[i - 1:i + 1],
@@ -76,9 +91,9 @@ def visualise(values: gtsam.Values,
                  pzs[i - 1:i + 1],
                  color='k',
                  alpha=alphas[i])
-    plt.quiver(pxs, pys, pzs, pxus, pxvs, pxws, color='r')
-    plt.quiver(pxs, pys, pzs, pyus, pyvs, pyws, color='g')
-    plt.quiver(pxs, pys, pzs, pzus, pzvs, pzws, color='b')
+    plt.quiver(pxs, pys, pzs, pxus * sf, pxvs * sf, pxws * sf, color='r')
+    plt.quiver(pxs, pys, pzs, pyus * sf, pyvs * sf, pyws * sf, color='g')
+    plt.quiver(pxs, pys, pzs, pzus * sf, pzvs * sf, pzws * sf, color='b')
 
     for k, q in full_qs.items():
         visualise_ellipsoid(q.pose().matrix(), q.radii(), cs[labels[k]])
@@ -92,8 +107,10 @@ def visualise(values: gtsam.Values,
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
+    ax.autoscale()
     _set_axes_equal(ax)
     plt.show(block=block)
+    plt.pause(0.05)
 
 
 def visualise_ellipsoid(pose: np.ndarray, radii: np.ndarray, color):

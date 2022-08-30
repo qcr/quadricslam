@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from quadricslam import (DataAssociator, DataSource, Detection, Detector,
-                         QuadricSlam, qi, visualise)
+                         QuadricSlam, QuadricSlamState, qi, visualise)
 from spatialmath import SE3
 from typing import Any, List, Optional, Tuple
 import gtsam
@@ -32,24 +32,27 @@ class DummyAssociator(DataAssociator):
         return [x for xs in list_of_lists for x in xs]
 
     def associate(
-        self, new_detections: List[Detection], unassociated: List[Detection],
-        associated: List[Detection]
+        self, state: QuadricSlamState
     ) -> Tuple[List[Detection], List[Detection], List[Detection]]:
         # Use our labels to associate, accepting all quadrics with >= 3
         # observations
-        ds = new_detections + unassociated
+        s = state.system
+        n = state.this_step
+        new_ds = [] if n is None else n.detections
+
+        ds = new_ds + s.unassociated
         newly_associated = [
-            d for d in ds if d.label in set(d.label for d in associated) or
+            d for d in ds if d.label in set(d.label for d in s.associated) or
             len([x for x in ds if x.label == d.label]) >= 3
         ]
         for d in newly_associated:
             d.quadric_key = gtsam.symbol(d.label[0], int(d.label[1:]))
         return (newly_associated, [
-            d for d in new_detections + unassociated + associated
-            if d in newly_associated or d in associated
+            d for d in ds + s.associated
+            if d in newly_associated or d in s.associated
         ], [
-            d for d in new_detections + unassociated + associated
-            if d not in newly_associated and d not in associated
+            d for d in ds + s.associated
+            if d not in newly_associated and d not in s.associated
         ])
 
 
@@ -58,11 +61,14 @@ class DummyData(DataSource):
     def __init__(self) -> None:
         self.restart()
 
+    def calib_rgb(self) -> np.ndarray:
+        return np.array([525, 525, 0, 160, 120])
+
     def done(self) -> bool:
         return self.i == len(POSES)
 
     def next(
-        self
+        self, state: QuadricSlamState
     ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
         self.i += 1
         return SE3(POSES[self.i - 1].matrix()), None, None
@@ -76,28 +82,31 @@ class DummyDetector(Detector):
     def __init__(self) -> None:
         self.i = 0
 
-    def calib(self) -> np.ndarray:
-        return np.array([525, 525, 0, 160, 120])
-
-    def detect(self, rgb: Optional[np.ndarray],
-               pose_key: int) -> List[Detection]:
+    def detect(self, state: QuadricSlamState) -> List[Detection]:
         i = self.i
         self.i += 1
         return [
             Detection(label=gtsam.Symbol(qi(iq)).string(),
                       bounds=gtsam_quadrics.QuadricCamera.project(
-                          q, POSES[i],
-                          gtsam.Cal3_S2(self.calib())).bounds().vector(),
-                      pose_key=pose_key) for iq, q in enumerate(QUADRICS)
+                          q, POSES[i], gtsam.Cal3_S2(
+                              state.system.calib_rgb)).bounds().vector(),
+                      pose_key=state.this_step.pose_key)
+            for iq, q in enumerate(QUADRICS)
         ]
 
 
-if __name__ == '__main__':
+def run():
     q = QuadricSlam(
         data_source=DummyData(),
         detector=DummyDetector(),
         associator=DummyAssociator(),
-        initial_pose=POSES[0].matrix(),
+        initial_pose=SE3(POSES[0].matrix()),
+        optimiser_batch=True,
         on_new_estimate=(
-            lambda vals, labels, done: visualise(vals, labels, done)))
+            lambda state: visualise(state.system.estimates, state.system.
+                                    labels, state.system.optimiser_batch)))
     q.spin()
+
+
+if __name__ == '__main__':
+    run()

@@ -4,4 +4,3 @@ __pycache__/
 *.egg-info/
 
 dist/
-examples/tum_rgbd_dataset/rgbd_dataset_*

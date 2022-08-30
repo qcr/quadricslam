@@ -6,7 +6,8 @@ import numpy as np
 
 from quadricslam import visualise
 
-if __name__ == '__main__':
+
+def run():
     # Noise models & shortcuts for generating symbols
     NOISE_PRIOR = gtsam.noiseModel.Diagonal.Sigmas(
         np.array([1e-1] * 6, dtype=np.float64))
@@ -71,3 +72,7 @@ if __name__ == '__main__':
 
     print(r)
     visualise(r, {Q(i): gtsam.Symbol(Q(i)).string() for i in [0, 1]}, True)
+
+
+if __name__ == '__main__':
+    run()
