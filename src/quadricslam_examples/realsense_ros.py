@@ -12,7 +12,8 @@ def run():
             "background with the RealSense and Kimera VIO ROS nodes running. "
             "A helper script exists to setup a ROS workspace with these "
             "dependencies.",
-            width=80), __file__))
+            width=80), os.path.join(os.path.dirname(__file__),
+                                    'create_ros_ws')))
 
 
 if __name__ == '__main__':
