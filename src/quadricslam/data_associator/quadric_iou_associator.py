@@ -51,6 +51,8 @@ class QuadricIouAssociator(DataAssociator):
                     gtsam_quadrics.QuadricCamera.project(
                         q, gtsam.Pose3(n.odom),
                         gtsam.Cal3_S2(s.calib_rgb)).bounds())
+                if np.isnan(ious[i, j]):
+                    ious[i, j] = 0
 
         # Solve as an optimal assignment problem
         dis, qis = linear_sum_assignment(-ious)
