@@ -185,6 +185,10 @@ class QuadricSlam:
 
         # Add any newly associated detections to the factor graph
         for d in n.new_associated:
+            if d.quadric_key is None:
+                print("WARN: skipping associated detection with "
+                      "quadric_key == None")
+                continue
             s.graph.add(
                 gtsam_quadrics.BoundingBoxFactor(
                     gtsam_quadrics.AlignedBox2(d.bounds),
@@ -200,7 +204,8 @@ class QuadricSlam:
                 # pu.db
                 s.optimiser.update(
                     new_factors(s.graph, s.optimiser.getFactorsUnsafe()),
-                    new_values(s.estimates, s.optimiser.getLinearizationPoint()))
+                    new_values(s.estimates,
+                               s.optimiser.getLinearizationPoint()))
                 s.estimates = s.optimiser.calculateEstimate()
             except RuntimeError as e:
                 # For handling gtsam::InderminantLinearSystemException:
