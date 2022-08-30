@@ -10,9 +10,7 @@ if [ -z "${1:-}" ]; then
     "Run script with a single argument for ROS workspace install location."
   exit 1;
 fi
-
-root="$(readlink -f "$(dirname $0)")"
-ros_root="$root/ros_ws"
+ros_root="$1"
 
 if [ ! -d "/opt/ros/" ] || \
     [ "$(find /opt/ros -mindepth 1 -maxdepth 1 -type d | wc -l)" == "0" ]; then
@@ -28,10 +26,8 @@ printf "\e[33m%s\e[0m\n\n" "Using found distro '$ros_distro'"
 ########################### Install APT dependencies ###########################
 ################################################################################
 
-printf "\e[32m%s\e[0m\n" "Installing all listed APT dependencies:"
+printf "\e[32m%s\e[0m\n" "Installing Kimera-VIO ROS APT dependencies:"
 
-# Kimera-VIO ROS
-printf "\e[32m - %s\e[0m\n" "Kimera-VIO ROS"
 sudo apt -y install --no-install-recommends apt-utils
 sudo apt -y install \
       build-essential \
@@ -52,26 +48,17 @@ sudo apt -y install \
       ros-$ros_distro-cv-bridge \
       unzip 
 
-# Kimera-Semantics
-printf "\n\e[32m - %s\e[0m\n" "Kimera-Semantics"
-sudo apt -y install \
-  autoconf \
-  python3-wstool \
-  python3-catkin-tools \
-  protobuf-compiler \
-  ros-$ros_distro-cmake-modules
-
 # Misc missing dependencies
-printf "\n\e[32m - %s\e[0m\n" "Missing undeclared dependencies"
-sudo apt -y install \
-  ros-$ros_distro-camera-info-manager \
-  ros-$ros_distro-depth-image-proc \
-  ros-$ros_distro-eigen-conversions \
-  ros-$ros_distro-image-proc \
-  ros-$ros_distro-interactive-markers \
-  ros-$ros_distro-rviz \
-  ros-$ros_distro-stereo-msgs \
-  ros-$ros_distro-tf-conversions
+# printf "\n\e[32m - %s\e[0m\n" "Missing undeclared dependencies"
+# sudo apt -y install \
+#   ros-$ros_distro-camera-info-manager \
+#   ros-$ros_distro-depth-image-proc \
+#   ros-$ros_distro-eigen-conversions \
+#   ros-$ros_distro-image-proc \
+#   ros-$ros_distro-interactive-markers \
+#   ros-$ros_distro-rviz \
+#   ros-$ros_distro-stereo-msgs \
+#   ros-$ros_distro-tf-conversions
 
 ################################################################################
 ########################## Build the Catkin workspace ##########################
@@ -87,22 +74,19 @@ catkin config --init \
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DGTSAM_TANGENT_PREINTEGRATION=OFF
 
 ################################################################################
-################ Add our pipeline's ROS packages (& their deps) ################
+#################### Add Kimera VIO's ROS packages (& deps) ####################
 ################################################################################
 
-
 printf "\n\e[32m%s\e[0m\n" \
-  "Adding our pipeline's ROS packages to '$ros_root/src'"
+  "Adding ROS package, plus dependencies, to '$ros_root/src'"
 
 pushd src
 
 git clone https://github.com/MIT-SPARK/Kimera-VIO-ROS.git
-git clone https://github.com/MIT-SPARK/Kimera-Semantics.git
 
 wstool init
 
 wstool merge -y Kimera-VIO-ROS/install/kimera_vio_ros_https.rosinstall
-wstool merge -y Kimera-Semantics/install/kimera_semantics_https.rosinstall
 
 # Monkey patch in forks for broken codebases...
 wstool merge -y - <<EOF
@@ -121,14 +105,6 @@ sed -i 's/\(add_definitions(-std=c++1\)./\14/' \
 #   https://github.com/ethz-asl/voxblox/issues/370
 sed -i 's/\(add_definitions(-std=c++1\)./\14/' \
   "$ros_root/src/voxblox/voxblox_ros/CMakeLists.txt"
-#   https://github.com/MIT-SPARK/Kimera-Semantics/issues/70
-sed -i '/project(.*)/a add_definitions(-std=c++14)' \
-  "$ros_root/src/Kimera-Semantics/kimera_semantics_ros/CMakeLists.txt"
-#   TODO fix missing opencv linking
-sed -i '/find_package(catkin_simple REQUIRED)/a find_package(opencv3_catkin REQUIRED)' \
-  "$ros_root/src/Kimera-Semantics/kimera_semantics_ros/CMakeLists.txt"
-sed -i '/cs_add_executable(/i target_link_libraries(${PROJECT_NAME} ${opencv3_catkin_LIBRARIES})\n' \
-  "$ros_root/src/Kimera-Semantics/kimera_semantics_ros/CMakeLists.txt"
 
 ################################################################################
 ########################## Build the Catkin workspace ##########################
