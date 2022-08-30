@@ -110,7 +110,7 @@ def visualise(values: gtsam.Values,
     ax.autoscale()
     _set_axes_equal(ax)
     plt.show(block=block)
-    plt.pause(0.01)
+    plt.pause(0.05)
 
 
 def visualise_ellipsoid(pose: np.ndarray, radii: np.ndarray, color):

@@ -158,6 +158,7 @@ class QuadricSlam:
             n.odom = self.visual_odometry.odom(self.state)
         n.detections = (self.detector.detect(self.state)
                         if self.detector else [])
+        n.detections = n.detections[0:1]
         n.new_associated, s.associated, s.unassociated = (
             self.associator.associate(self.state))
 
@@ -196,15 +197,17 @@ class QuadricSlam:
             if s.optimiser is None:
                 s.optimiser = s.optimiser_type(s.optimiser_params)
             try:
+                # pu.db
                 s.optimiser.update(
                     new_factors(s.graph, s.optimiser.getFactorsUnsafe()),
                     new_values(s.estimates, s.optimiser.getLinearizationPoint()))
                 s.estimates = s.optimiser.calculateEstimate()
-                if self.on_new_estimate:
-                    self.on_new_estimate(self.state)
-                print("Success")
             except RuntimeError as e:
-                print("Ill-conditioned")
+                # For handling gtsam::InderminantLinearSystemException:
+                #   https://gtsam.org/doxygen/a03816.html
+                pass
+            if self.on_new_estimate:
+                self.on_new_estimate(self.state)
 
         self.state.prev_step = n
 
