@@ -100,6 +100,11 @@ EOF
 
   wstool update
 
+  # Pick a more stable GTSAM
+  pushd gtsam
+  gtsam switch -d 4.1.1
+  popd
+
   # Monkey patch in code mods for broken codebases...
   #   https://github.com/ToniRV/mesh_rviz_plugins/issues/3
   sed -i 's/\(add_definitions(-std=c++1\)./\14/' \
