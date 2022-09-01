@@ -158,7 +158,6 @@ class QuadricSlam:
             n.odom = self.visual_odometry.odom(self.state)
         n.detections = (self.detector.detect(self.state)
                         if self.detector else [])
-        n.detections = n.detections[0:1]
         n.new_associated, s.associated, s.unassociated = (
             self.associator.associate(self.state))
 
