@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+
+import gtsam
+import gtsam_quadrics
+
+if __name__ == '__main__':
+    print("Hello QuadricSLAM")
+
+    a = gtsam.Pose3()
+    b = gtsam.Pose3()
+
+    print("Success")
+    print(gtsam.__file__)
+    print(gtsam_quadrics.__file__)
