@@ -115,7 +115,7 @@ fi
 ################### Link in the ROS package for this example ###################
 ################################################################################
 
-ln -sf  "$(dirname $(realpath $0))/realsense_ros" \
+ln -sfn "$(dirname $(realpath $0))/realsense_ros" \
   "$ros_root/src/quadricslam_realsense_ros"
 sudo rosdep init || true
 rosdep update
