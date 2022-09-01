@@ -117,6 +117,9 @@ fi
 
 ln -sf  "$(dirname $(realpath $0))/realsense_ros" \
   "$ros_root/src/quadricslam_realsense_ros"
+sudo rosdep init || true
+rosdep update
+rosdep install --from-paths ./quadricslam_realsense_ros -y
 
 
 ################################################################################
