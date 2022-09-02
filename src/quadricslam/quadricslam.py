@@ -5,7 +5,6 @@ from typing import Callable, Dict, List, Optional, Union
 import gtsam
 import gtsam_quadrics
 import numpy as np
-import pudb
 from spatialmath import SE3
 
 from .data_associator import DataAssociator

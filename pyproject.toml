@@ -6,7 +6,7 @@ readme = "./README.md"
 license = { file = "./LICENSE.txt" }
 authors = [{name = "Lachlan Nicholson", email = "lachlan.nicholson@hdr.qut.edu.au"}]
 maintainers = [{name = "Ben Talbot", email = "b.talbot@qut.edu.au"}]
-dependencies = [ "gtsam-quadrics" ]
+dependencies = [ "gtsam-quadrics", "numpy", "opencv-python", "matplotlib", "spatialmath-python", "scipy", "dinstinctipy" ]
 classifiers = [
   "Development Status :: 4 - Beta",
   "License :: OSI Approved :: BSD License",
