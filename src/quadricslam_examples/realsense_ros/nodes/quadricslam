@@ -1,14 +1,61 @@
 #!/usr/bin/env python3
 
+from threading import Lock
+from typing import Optional, Tuple
+import message_filters
+import numpy as np
+from sensor_msgs.msg import Image
+from spatialmath import SE3
+from ros_numpy import numpify
+
 import gtsam
 import gtsam_quadrics
 
+from quadricslam import DataSource, QuadricSlam
+from quadricslam.quadricslam_states import QuadricSlamState
+
+
+class RealSenseRos(DataSource):
+
+    def __init__(self) -> None:
+        self.sub_depth = message_filters.Subscriber('/depth', Image)
+        self.sub_rgb = message_filters.Subscriber('/rgb', Image)
+
+        self.msgs = None
+        self.msgs_lock = Lock()
+
+        self.ts = message_filters.TimeSynchronizer(
+            [self.sub_depth, self.sub_rgb], 10)
+        self.ts.registerCallback(self.callback)
+
+    def callback(self, depth: Image, rgb: Image):
+        with self.msgs_lock:
+            self.msgs = (depth, rgb)
+
+    def calib_depth(self) -> float:
+        return super().calib_depth()
+
+    def calib_rgb(self) -> np.ndarray:
+        return super().calib_rgb()
+
+    def done(self) -> bool:
+        return False
+
+    def next(
+        self, state: QuadricSlamState
+    ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
+        with self.msgs_lock:
+            return ((None, None, None) if self.msgs is None else
+                    (None, numpify(self.msgs[1]), numpify(self.msgs[0])))
+
+    def restart(self) -> None:
+        pass
+
+
+def run():
+    q = QuadricSlam(data_source=RealSenseRos())
+    q.spin()
+
+
 if __name__ == '__main__':
-    print("Hello QuadricSLAM")
-
-    a = gtsam.Pose3()
-    b = gtsam.Pose3()
-
-    print("Success")
-    print(gtsam.__file__)
-    print(gtsam_quadrics.__file__)
+    run()
