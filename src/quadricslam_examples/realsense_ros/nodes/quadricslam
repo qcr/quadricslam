@@ -9,16 +9,38 @@ import message_filters
 import numpy as np
 from ros_numpy import numpify
 import rospy
+from nav_msgs.msg import Odometry
 from sensor_msgs.msg import CameraInfo, Image
-from spatialmath import SE3
+from spatialmath import SE3, UnitQuaternion
 
-from quadricslam import (DataSource, QuadricSlam, QuadricSlamState, utils,
-                         visualise)
+from quadricslam import (DataSource, QuadricSlam, QuadricSlamState,
+                         VisualOdometry, utils, visualise)
 from quadricslam.data_associator.quadric_iou_associator import QuadricIouAssociator
 from quadricslam.detector.faster_rcnn import FasterRcnn
 
 
-class RealSenseRos(DataSource):
+class RosOdometry(VisualOdometry):
+
+    def __init__(self) -> None:
+        self.sub = rospy.Subscriber('/odom', Odometry, self.callback)
+        self.msg = None
+        self.msg_lock = Lock()
+
+    def callback(self, msg: Odometry):
+        with self.msg_lock:
+            self.msg = msg
+
+    def odom(self, state: QuadricSlamState) -> SE3:
+        with self.msg_lock:
+            if self.msg is None:
+                return SE3()
+            t = self.msg.pose.pose.position
+            r = self.msg.pose.pose.orientation
+            return (SE3.Trans(t.x, t.y, t.z) *
+                    UnitQuaternion(r.w, [r.x, r.y, r.z]).SE3())
+
+
+class RosImages(DataSource):
 
     def __init__(self) -> None:
         self.sub_depth = message_filters.Subscriber('/depth', Image)
@@ -57,9 +79,10 @@ class RealSenseRos(DataSource):
 
 def run():
     q = QuadricSlam(
-        data_source=RealSenseRos(),
-        detector=FasterRcnn(),
         associator=QuadricIouAssociator(),
+        data_source=RosImages(),
+        detector=FasterRcnn(),
+        visual_odometry=RosOdometry(),
         optimiser_batch=False,
         on_new_estimate=(
             lambda state: visualise(state.system.estimates, state.system.
