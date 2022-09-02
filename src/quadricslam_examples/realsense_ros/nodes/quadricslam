@@ -56,7 +56,7 @@ class RosImages(DataSource):
         self, state: QuadricSlamState
     ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
         return (None, numpify(rospy.wait_for_message('/rgb', Image)),
-                numpify(rospy.wait_for_message('/depth', Image)))
+                numpify(rospy.wait_for_message('/depth', Image)) / 100)
 
     def restart(self) -> None:
         pass
