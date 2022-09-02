@@ -2,18 +2,20 @@
 
 from threading import Lock
 from typing import Optional, Tuple
-import message_filters
-import numpy as np
-from sensor_msgs.msg import CameraInfo, Image
-from spatialmath import SE3
-from ros_numpy import numpify
-import rospy
 
 import gtsam
 import gtsam_quadrics
+import message_filters
+import numpy as np
+from ros_numpy import numpify
+import rospy
+from sensor_msgs.msg import CameraInfo, Image
+from spatialmath import SE3
 
-from quadricslam import DataSource, QuadricSlam
-from quadricslam.quadricslam_states import QuadricSlamState
+from quadricslam import (DataSource, QuadricSlam, QuadricSlamState, utils,
+                         visualise)
+from quadricslam.data_associator.quadric_iou_associator import QuadricIouAssociator
+from quadricslam.detector.faster_rcnn import FasterRcnn
 
 
 class RealSenseRos(DataSource):
@@ -54,7 +56,15 @@ class RealSenseRos(DataSource):
 
 
 def run():
-    q = QuadricSlam(data_source=RealSenseRos())
+    q = QuadricSlam(
+        data_source=RealSenseRos(),
+        detector=FasterRcnn(),
+        associator=QuadricIouAssociator(),
+        optimiser_batch=False,
+        on_new_estimate=(
+            lambda state: visualise(state.system.estimates, state.system.
+                                    labels, state.system.optimiser_batch)),
+        quadric_initialiser=utils.initialise_quadric_from_depth)
     q.spin()
 
 
