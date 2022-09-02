@@ -15,6 +15,18 @@ def run():
             width=80), os.path.join(os.path.dirname(__file__),
                                     'create_ros_ws')))
 
+    print(
+        "%s\n\n\t%s\n\t%s\n\t%s\n" %
+        (textwrap.fill(
+            "Once this has built there will be a ROS workspace with all of the "
+            "manually built dependencies required to run this example. Once the "
+            "workspace has been sourced, the following 3 launch files must be run "
+            "in order (ensuring there is appropriate delay between each to support "
+            "initialisation):",
+            width=80), "roslaunch quadricslam_realsense_ros realsense.launch",
+         "roslaunch quadricslam_realsense_ros kimera_vio.launch",
+         "roslaunch quadricslam_realsense_ros quadricslam.launch"))
+
 
 if __name__ == '__main__':
     run()
