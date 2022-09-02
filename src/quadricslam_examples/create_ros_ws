@@ -102,7 +102,7 @@ EOF
 
   # Pick a more stable GTSAM
   pushd gtsam
-  gtsam switch -d 4.1.1
+  gtsam switch -d 4ea2b2ee9  # Random last working commit... sorry...
   popd
 
   # Monkey patch in code mods for broken codebases...
