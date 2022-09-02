@@ -100,7 +100,7 @@ Same scenario as the `hello_manual_quadricslam` example, but uses the abstractio
 
 Re-creation of the TUM RGBD dataset experiments used in our [initial publication](#citing-our-work). There is a script included for downloading the dataset.
 
-![realsense_python example](https://github.com/qcr/quadricslam/wiki/realsense_python.jpg)
+![tum_rgbd_dataset example](https://github.com/qcr/quadricslam/wiki/tum_rgbd.jpg)
 
 _Note: the paper used hand-annotated data to avoid the data association problem; as a result the example here requires a custom data associator to be created before it will run_
 
@@ -110,7 +110,7 @@ Demonstrates how a system can be run using an RGBD RealSense, the [pyrealsense2]
 
 The example is a simple plug-n-play system, with weak localisation and data association:
 
-![realsense_ros example](https://github.com/qcr/quadricslam/wiki/realsense_ros.jpg)
+![realsense_python example](https://github.com/qcr/quadricslam/wiki/realsense_python.jpg)
 
 ### `realsense_ros`
 
@@ -118,7 +118,7 @@ Demonstrates how a ROS QuadricSLAM system can be put together with an RGBD RealS
 
 This example includes a script for creating an entire ROS workspace containing all the required packages built from source. Once installed, it runs the same as the `realsense_python` example but with significantly better localisation:
 
-TODO
+![realsense_ros example](https://github.com/qcr/quadricslam/wiki/realsense_ros.jpg)
 
 ## Citing our work
 
