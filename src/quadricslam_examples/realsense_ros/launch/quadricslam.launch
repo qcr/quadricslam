@@ -4,6 +4,6 @@
     <remap to="/camera/color/image_raw" from="/rgb" />
     <remap to="/camera/color/camera_info" from="/rgb_info" />
 
-    <remap to="/kimera_vio_ros/optimized_odometry" from="/odom" />
+    <remap to="/kimera_vio_ros/odometry" from="/odom" />
   </node>
 </launch>
