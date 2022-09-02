@@ -1,0 +1,3 @@
+<launch>
+  <node name="quadricslam" pkg="quadricslam_realsense_ros" type="quadricslam" output="screen"/>
+</launch>

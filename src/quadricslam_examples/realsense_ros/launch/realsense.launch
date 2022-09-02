@@ -4,8 +4,7 @@
     <arg name="enable_infra2" value="true" />
     <arg name="enable_accel" value="true" />
     <arg name="enable_gyro" value="true" />
+    <arg name="infra_width" value="640" />
     <arg name="unite_imu_method" value="linear_interpolation" />
   </include>
-
-
 </launch>
