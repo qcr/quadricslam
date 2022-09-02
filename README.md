@@ -61,6 +61,8 @@ The examples described below also provide code showing how to create customisati
 
 ## Running the examples from this repository
 
+_Note: in the spirit of keeping this package light, some dependencies may not be installed; please install those manually_
+
 This repository contains a number of examples to demonstrate how QuadricSLAM systems can be set up in different contexts.
 
 Each example is a file in the `quadricslam_examples` module, with a standalone `run()` function. There are two possible ways to run each example:
