@@ -61,20 +61,51 @@ The examples described below also provide code showing how to create customisati
 
 ## Running the examples from this repository
 
-TODO when the examples are actually done
+This repository contains a number of examples to demonstrate how QuadricSLAM systems can be set up in different contexts.
 
-### `hello_manual_quadricslam` and `hello_quadricslam`
+Each example is a file within the `quadricslam_examples` module, with a standalone `run()` function executed when run. This leaves two possible ways to run each example:
+
+1. Directly through the command line:
+
+   ```
+   python -m quadricslam_examples.EXAMPLE_NAME ARGS ...
+   ```
+
+   e.g for the `hello_quadricslam` examples:
+
+   ```
+   python -m quadricslam_examples.hello_quadricslam
+   ```
+
+2. Or from within Python:
+
+   ```python
+   from quadricslam_examples.EXAMPLE_NAME import run
+   run()
+   ```
+
+### `hello_manual_quadricslam`
+
+Shows how to create a QuadricSLAM system from scratch using the primitives exposed by our [GTSAM Quadrics library](https://github.com/qcr/gtsam-quadrics). The scenario is 4 viewpoints in a square around 2 quadrics in the middle of the square:
+
+TODO
+
+### `hello_quadricslam`
+
+Same scenario as the `hello_manual_quadricslam` example, but uses the abstractions provided by this library. Shows how an entire QuadricSLAM system can be created with only a few lines of code when the appropriate components are available:
 
 TODO
 
 ### `tum_rgbd_dataset`
 
-TODO
+Re-creation of the TUM RGBD dataset experiments used in our [initial publication](#citing-our-work). There is a script included for downloading the dataset.
 
 <p align="center">
 <img alt="TUM RGBD QuadricSLAM still 1" src="https://github.com/qcr/quadricslam/wiki/quadricslam_still1.png" width="400"/>
 <img alt="TUM RGBD QuadricSLAM still 2" src="https://github.com/qcr/quadricslam/wiki/quadricslam_still2.png"  width="400"/>
 </p>
+
+_Note: the paper used hand-annotated data to avoid the data association problem; as a result the example here requires a custom data associator to be created before it will run_
 
 ### TODO RealSense and BenchBot examples
 
