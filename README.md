@@ -63,7 +63,7 @@ The examples described below also provide code showing how to create customisati
 
 This repository contains a number of examples to demonstrate how QuadricSLAM systems can be set up in different contexts.
 
-Each example is a file within the `quadricslam_examples` module, with a standalone `run()` function executed when run. This leaves two possible ways to run each example:
+Each example is a file in the `quadricslam_examples` module, with a standalone `run()` function. There are two possible ways to run each example:
 
 1. Directly through the command line:
 
@@ -107,7 +107,21 @@ Re-creation of the TUM RGBD dataset experiments used in our [initial publication
 
 _Note: the paper used hand-annotated data to avoid the data association problem; as a result the example here requires a custom data associator to be created before it will run_
 
-### TODO RealSense and BenchBot examples
+### `realsense_python`
+
+Demonstrates how a system can be run using an RGBD RealSense, the [pyrealsense2](https://pypi.org/project/pyrealsense2/) library, and a barebones OpenCV visual odometry algorithm.
+
+The example is a simple plug-n-play system, with weak localisation and data association:
+
+TODO
+
+### `realsense_ros`
+
+Demonstrates how a ROS QuadricSLAM system can be put together with an RGBD RealSense, the [ROS RealSense](https://github.com/IntelRealSense/realsense-ros) library, and [Kimera VIO's visual odometry system](https://github.com/MIT-SPARK/Kimera-VIO-ROS).
+
+This example includes a script for creating an entire ROS workspace containing all the required packages built from source. Once installed, it runs the same as the `realsense_python` example but with significantly better localisation:
+
+TODO
 
 ## Citing our work
 
