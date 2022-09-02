@@ -63,22 +63,66 @@ The examples described below also provide code showing how to create customisati
 
 ## Running the examples from this repository
 
-TODO when the examples are actually done
+_Note: in the spirit of keeping this package light, some dependencies may not be installed; please install those manually_
 
-### `hello_manual_quadricslam` and `hello_quadricslam`
+This repository contains a number of examples to demonstrate how QuadricSLAM systems can be set up in different contexts.
 
-TODO
+Each example is a file in the `quadricslam_examples` module, with a standalone `run()` function. There are two possible ways to run each example:
+
+1. Directly through the command line:
+
+   ```
+   python -m quadricslam_examples.EXAMPLE_NAME ARGS ...
+   ```
+
+   e.g for the `hello_quadricslam` examples:
+
+   ```
+   python -m quadricslam_examples.hello_quadricslam
+   ```
+
+2. Or from within Python:
+
+   ```python
+   from quadricslam_examples.EXAMPLE_NAME import run
+   run()
+   ```
+
+### `hello_manual_quadricslam`
+
+Shows how to create a QuadricSLAM system from scratch using the primitives exposed by our [GTSAM Quadrics library](https://github.com/qcr/gtsam-quadrics). The scenario is 4 viewpoints in a square around 2 quadrics in the middle of the square:
+
+![hello_manual_quadricslam example](https://github.com/qcr/quadricslam/wiki/hello_quadricslam.jpg)
+
+### `hello_quadricslam`
+
+Same scenario as the `hello_manual_quadricslam` example, but uses the abstractions provided by this library. Shows how an entire QuadricSLAM system can be created with only a few lines of code when the appropriate components are available:
+
+![hello_quadricslam example](https://github.com/qcr/quadricslam/wiki/hello_quadricslam.jpg)
 
 ### `tum_rgbd_dataset`
 
-TODO
+Re-creation of the TUM RGBD dataset experiments used in our [initial publication](#citing-our-work). There is a script included for downloading the dataset.
 
-<p align="center">
-<img alt="TUM RGBD QuadricSLAM still 1" src="https://github.com/qcr/quadricslam/wiki/quadricslam_still1.png" width="400"/>
-<img alt="TUM RGBD QuadricSLAM still 2" src="https://github.com/qcr/quadricslam/wiki/quadricslam_still2.png"  width="400"/>
-</p>
+![tum_rgbd_dataset example](https://github.com/qcr/quadricslam/wiki/tum_rgbd.jpg)
 
-### TODO RealSense and BenchBot examples
+_Note: the paper used hand-annotated data to avoid the data association problem; as a result the example here requires a custom data associator to be created before it will run_
+
+### `realsense_python`
+
+Demonstrates how a system can be run using an RGBD RealSense, the [pyrealsense2](https://pypi.org/project/pyrealsense2/) library, and a barebones OpenCV visual odometry algorithm.
+
+The example is a simple plug-n-play system, with weak localisation and data association:
+
+![realsense_python example](https://github.com/qcr/quadricslam/wiki/realsense_python.jpg)
+
+### `realsense_ros`
+
+Demonstrates how a ROS QuadricSLAM system can be put together with an RGBD RealSense, the [ROS RealSense](https://github.com/IntelRealSense/realsense-ros) library, and [Kimera VIO's visual odometry system](https://github.com/MIT-SPARK/Kimera-VIO-ROS).
+
+This example includes a script for creating an entire ROS workspace containing all the required packages built from source. Once installed, it runs the same as the `realsense_python` example but with significantly better localisation:
+
+![realsense_ros example](https://github.com/qcr/quadricslam/wiki/realsense_ros.jpg)
 
 ## Citing our work
 

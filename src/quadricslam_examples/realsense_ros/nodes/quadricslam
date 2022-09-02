@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+
+from threading import Lock
+from typing import Optional, Tuple
+
+import gtsam
+import gtsam_quadrics
+import message_filters
+import numpy as np
+from ros_numpy import numpify
+import rospy
+from nav_msgs.msg import Odometry
+from sensor_msgs.msg import CameraInfo, Image
+from spatialmath import SE3, UnitQuaternion
+
+from quadricslam import (DataSource, QuadricSlam, QuadricSlamState,
+                         VisualOdometry, utils, visualise)
+from quadricslam.data_associator.quadric_iou_associator import QuadricIouAssociator
+from quadricslam.detector.faster_rcnn import FasterRcnn
+
+
+class RosOdometry(VisualOdometry):
+
+    def __init__(self) -> None:
+        self.sub = rospy.Subscriber('/odom', Odometry, self.callback)
+        self.msg = None
+        self.msg_lock = Lock()
+
+    def callback(self, msg: Odometry):
+        with self.msg_lock:
+            self.msg = msg
+
+    def odom(self, state: QuadricSlamState) -> SE3:
+        with self.msg_lock:
+            if self.msg is None:
+                return SE3()
+            t = self.msg.pose.pose.position
+            r = self.msg.pose.pose.orientation
+            return (SE3.Trans(t.x, t.y, t.z) *
+                    UnitQuaternion(r.w, [r.x, r.y, r.z]).SE3())
+
+
+class RosImages(DataSource):
+
+    def __init__(self) -> None:
+        ci: CameraInfo = rospy.wait_for_message('/rgb_info', CameraInfo)
+        self._calib_rgb = np.array([ci.K[0], ci.K[4], 1, ci.K[2], ci.K[5]])
+
+    def calib_rgb(self) -> np.ndarray:
+        return self._calib_rgb
+
+    def done(self) -> bool:
+        return False
+
+    def next(
+        self, state: QuadricSlamState
+    ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
+        return (None, numpify(rospy.wait_for_message('/rgb', Image)),
+                numpify(rospy.wait_for_message('/depth', Image)) / 100)
+
+    def restart(self) -> None:
+        pass
+
+
+def run():
+    q = QuadricSlam(
+        associator=QuadricIouAssociator(),
+        data_source=RosImages(),
+        detector=FasterRcnn(),
+        visual_odometry=RosOdometry(),
+        optimiser_batch=False,
+        on_new_estimate=(
+            lambda state: visualise(state.system.estimates, state.system.
+                                    labels, state.system.optimiser_batch)),
+        quadric_initialiser=utils.initialise_quadric_from_depth)
+    q.spin()
+
+
+if __name__ == '__main__':
+    rospy.init_node("quadricslam")
+    run()

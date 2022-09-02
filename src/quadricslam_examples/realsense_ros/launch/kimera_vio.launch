@@ -1,0 +1,3 @@
+<launch>
+  <include file="$(find kimera_vio_ros)/launch/kimera_vio_ros_realsense_IR.launch" />
+</launch>

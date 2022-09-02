@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+#
+# Creates, configures, and builds a ROS Workspace containing all ROS packages
+# necessary for running Kimera VIO ROS. You need to have a version of ROS
+# installed on your system before this script will proceed.
+set -euo pipefail
+
+if [ -z "${1:-}" ]; then
+  printf "\e[31m%s\e[0m\n" \
+    "Run script with a single argument for ROS workspace install location."
+  exit 1;
+fi
+ros_root="$1"
+
+if [ ! -d "/opt/ros/" ] || \
+    [ "$(find /opt/ros -mindepth 1 -maxdepth 1 -type d | wc -l)" == "0" ]; then
+  printf "\e[31m%s\e[0m\n" \
+    "No ROS install found in /opt/ros. Are you sure you have ROS installed?"
+  exit 1;
+fi
+
+ros_distro="$(ls -t1 /opt/ros | head -n1)"
+printf "\e[33m%s\e[0m\n\n" "Using found distro '$ros_distro'"
+
+################################################################################
+########################### Install APT dependencies ###########################
+################################################################################
+
+printf "\e[32m%s\e[0m\n" "Installing Kimera-VIO ROS APT dependencies:"
+
+sudo apt -y install --no-install-recommends apt-utils
+sudo apt -y install \
+      build-essential \
+      cmake \
+      gfortran \
+      libatlas-base-dev \
+      libboost-all-dev \
+      libgtk-3-dev \
+      libjpeg-dev \
+      libparmetis-dev \
+      libpng-dev \
+      libtiff-dev \
+      pkg-config autoconf \
+      python3-wstool \
+      python3-catkin-tools \
+      ros-$ros_distro-image-geometry \
+      ros-$ros_distro-pcl-ros \
+      ros-$ros_distro-cv-bridge \
+      unzip 
+
+# Misc missing dependencies
+# printf "\n\e[32m - %s\e[0m\n" "Missing undeclared dependencies"
+# sudo apt -y install \
+#   ros-$ros_distro-camera-info-manager \
+#   ros-$ros_distro-depth-image-proc \
+#   ros-$ros_distro-eigen-conversions \
+#   ros-$ros_distro-image-proc \
+#   ros-$ros_distro-interactive-markers \
+#   ros-$ros_distro-rviz \
+#   ros-$ros_distro-stereo-msgs \
+#   ros-$ros_distro-tf-conversions
+
+################################################################################
+########################## Build the Catkin workspace ##########################
+################################################################################
+
+printf "\n\e[32m%s\e[0m\n" "Constructing Catkin workspace in '$ros_root'"
+
+mkdir -p "$ros_root/src"
+pushd "$ros_root"
+catkin config --init \
+  --extend "/opt/ros/$ros_distro" \
+  --merge-devel \
+  --cmake-args -DCMAKE_BUILD_TYPE=Release -DGTSAM_TANGENT_PREINTEGRATION=OFF
+
+################################################################################
+#################### Add Kimera VIO's ROS packages (& deps) ####################
+################################################################################
+
+printf "\n\e[32m%s\e[0m\n" \
+  "Adding ROS package, plus dependencies, to '$ros_root/src'"
+
+pushd src
+
+if [ ! -f .rosinstall ]; then
+  rm -rf * .rosinstall || true
+  git clone https://github.com/MIT-SPARK/Kimera-VIO-ROS.git
+
+  wstool init
+
+  wstool merge -y Kimera-VIO-ROS/install/kimera_vio_ros_https.rosinstall
+
+  # Monkey patch in forks for broken codebases...
+  wstool merge -y - <<EOF
+- git:
+    local-name: image_undistort
+    uri: https://github.com/berndpfrommer/image_undistort.git
+    version: ubuntu_20.04
+EOF
+
+  wstool update
+
+  # Pick a more stable GTSAM
+  pushd gtsam
+  gtsam switch -d 4ea2b2ee9  # Random last working commit... sorry...
+  popd
+
+  # Monkey patch in code mods for broken codebases...
+  #   https://github.com/ToniRV/mesh_rviz_plugins/issues/3
+  sed -i 's/\(add_definitions(-std=c++1\)./\14/' \
+    "$ros_root/src/mesh_rviz_plugins/CMakeLists.txt"
+fi
+
+################################################################################
+################### Link in the ROS package for this example ###################
+################################################################################
+
+ln -sfn "$(dirname $(realpath $0))/realsense_ros" \
+  "$ros_root/src/quadricslam_realsense_ros"
+sudo rosdep init || true
+rosdep update
+rosdep install --from-paths ./quadricslam_realsense_ros -y
+
+
+################################################################################
+########################## Build the Catkin workspace ##########################
+################################################################################
+
+catkin build

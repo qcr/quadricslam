@@ -5,7 +5,6 @@ from typing import Callable, Dict, List, Optional, Union
 import gtsam
 import gtsam_quadrics
 import numpy as np
-import pudb
 from spatialmath import SE3
 
 from .data_associator import DataAssociator
@@ -158,7 +157,6 @@ class QuadricSlam:
             n.odom = self.visual_odometry.odom(self.state)
         n.detections = (self.detector.detect(self.state)
                         if self.detector else [])
-        n.detections = n.detections[0:1]
         n.new_associated, s.associated, s.unassociated = (
             self.associator.associate(self.state))
 

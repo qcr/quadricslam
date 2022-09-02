@@ -1,0 +1,9 @@
+<launch>
+  <node name="quadricslam" pkg="quadricslam_realsense_ros" type="quadricslam" output="screen">
+    <remap to="/camera/depth/image_rect_raw" from="/depth" />
+    <remap to="/camera/color/image_raw" from="/rgb" />
+    <remap to="/camera/color/camera_info" from="/rgb_info" />
+
+    <remap to="/kimera_vio_ros/odometry" from="/odom" />
+  </node>
+</launch>

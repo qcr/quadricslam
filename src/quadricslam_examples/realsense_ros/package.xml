@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>quadricslam_realsense_ros</name>
+  <version>0.0.0</version>
+  <description>The quadricslam_realsense_ros package</description>
+
+  <maintainer email="ben@todo.todo">ben</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>realsense2_camera</exec_depend>
+
+  <export>
+  </export>
+</package>

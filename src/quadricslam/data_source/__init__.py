@@ -29,6 +29,7 @@ class DataSource(ABC):
     def next(
         self, state: QuadricSlamState
     ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
+        # Tuple is (odom, RGB, depth)
         pass
 
     @abstractmethod
