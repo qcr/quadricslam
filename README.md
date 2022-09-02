@@ -8,7 +8,7 @@
 QuadricSLAM is a system for using [quadrics](https://en.wikipedia.org/wiki/Quadric) to represent objects in a scene, leveraging common optimisation tools for simultaneous localisation and mapping (SLAM) problems to converge on stable object maps and camera trajectories. This library uses [Georgia Tech's Smoothing and Mapping (GTSAM)](https://github.com/borglab/gtsam) library for factor graph optimisation, and adds support through our custom [GTSAM quadrics](https://github.com/qcr/gtsam-quadrics) extension.
 
 TODO update with a more holistic reflection of the repository in its current state
-[![@youtube QuadricSLAM demonstration for RA-L](https://github.com/best-of-acrv/gtsam-quadrics/raw/master/doc/quadricslam_video.png)](https://www.youtube.com/watch?v=n-j0DFDFSKU)
+[![@youtube QuadricSLAM demonstration for RA-L](https://github.com/qcr/gtsam-quadrics/raw/master/doc/quadricslam_video.png)](https://www.youtube.com/watch?v=n-j0DFDFSKU)
 
 The key features of this repository are:
 
