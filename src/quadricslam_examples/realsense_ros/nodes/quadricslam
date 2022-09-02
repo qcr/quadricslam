@@ -43,22 +43,8 @@ class RosOdometry(VisualOdometry):
 class RosImages(DataSource):
 
     def __init__(self) -> None:
-        self.sub_depth = message_filters.Subscriber('/depth', Image)
-        self.sub_rgb = message_filters.Subscriber('/rgb', Image)
-
         ci: CameraInfo = rospy.wait_for_message('/rgb_info', CameraInfo)
         self._calib_rgb = np.array([ci.K[0], ci.K[4], 1, ci.K[2], ci.K[5]])
-
-        self.msgs = None
-        self.msgs_lock = Lock()
-
-        self.ts = message_filters.TimeSynchronizer(
-            [self.sub_depth, self.sub_rgb], 10)
-        self.ts.registerCallback(self.callback)
-
-    def callback(self, depth: Image, rgb: Image):
-        with self.msgs_lock:
-            self.msgs = (depth, rgb)
 
     def calib_rgb(self) -> np.ndarray:
         return self._calib_rgb
@@ -69,9 +55,8 @@ class RosImages(DataSource):
     def next(
         self, state: QuadricSlamState
     ) -> Tuple[Optional[SE3], Optional[np.ndarray], Optional[np.ndarray]]:
-        with self.msgs_lock:
-            return ((None, None, None) if self.msgs is None else
-                    (None, numpify(self.msgs[1]), numpify(self.msgs[0])))
+        return (None, numpify(rospy.wait_for_message('/rgb', Image)),
+                numpify(rospy.wait_for_message('/depth', Image)))
 
     def restart(self) -> None:
         pass
