@@ -4,9 +4,10 @@ from threading import Lock
 from typing import Optional, Tuple
 import message_filters
 import numpy as np
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import CameraInfo, Image
 from spatialmath import SE3
 from ros_numpy import numpify
+import rospy
 
 import gtsam
 import gtsam_quadrics
@@ -21,6 +22,9 @@ class RealSenseRos(DataSource):
         self.sub_depth = message_filters.Subscriber('/depth', Image)
         self.sub_rgb = message_filters.Subscriber('/rgb', Image)
 
+        ci: CameraInfo = rospy.wait_for_message('/rgb_info', CameraInfo)
+        self._calib_rgb = np.array([ci.K[0], ci.K[4], 1, ci.K[2], ci.K[5]])
+
         self.msgs = None
         self.msgs_lock = Lock()
 
@@ -32,11 +36,8 @@ class RealSenseRos(DataSource):
         with self.msgs_lock:
             self.msgs = (depth, rgb)
 
-    def calib_depth(self) -> float:
-        return super().calib_depth()
-
     def calib_rgb(self) -> np.ndarray:
-        return super().calib_rgb()
+        return self._calib_rgb
 
     def done(self) -> bool:
         return False
